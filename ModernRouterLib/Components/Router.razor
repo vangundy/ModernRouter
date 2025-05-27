@@ -1,0 +1,12 @@
+﻿@if (_current?.Matched is null)
+{
+    @NotFound
+}
+else
+{
+    <CascadingValue Value="_routeTable">
+        <ModernRouter.Components.RouteView Entry="_current.Matched"
+                                           RemainingSegments="_current.RemainingSegments"
+                                           RouteValues="_current.RouteValues" />
+    </CascadingValue>
+}

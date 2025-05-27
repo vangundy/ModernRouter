@@ -1,0 +1,7 @@
+﻿@if (RouteContext?.Matched is not null)
+{
+    <CascadingValue Value="RouteContext.RemainingSegments">
+        <DynamicComponent Type="RouteContext.Matched.Component"
+                          Parameters="RouteContext.RouteValues" />
+    </CascadingValue>
+}

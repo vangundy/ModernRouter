@@ -1,0 +1,13 @@
+﻿@page "/details/{LineId:int}/{*Subsection}"
+
+<p>Order details for ID: @LineId will be displayed here.</p>
+<p>Additional Section: @Subsection</p>
+
+@code {
+
+    [Parameter]
+    public int LineId { get; set; }
+
+    [Parameter]
+    public string Subsection { get; set; } = string.Empty;
+}

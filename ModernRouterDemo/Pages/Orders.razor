@@ -1,0 +1,17 @@
+﻿@page "/orders/{id:int?}"
+
+@if (id is null)
+{
+    <h2>All Orders</h2>
+}
+else
+{
+    <h2>Order ID: @id</h2>
+}
+<Outlet />
+
+@code {
+
+    [Parameter]
+    public int? id { get; set; }
+}
