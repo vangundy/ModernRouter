@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
 using ModernRouter.Services;
 using System.Reflection;
@@ -6,6 +7,7 @@ using System.Reflection;
 namespace ModernRouter.Components;
 public partial class Router
 {
+    [Inject] private IServiceProvider Services { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Parameter] public Assembly AppAssembly { get; set; } = Assembly.GetEntryAssembly()!;
     [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
@@ -13,21 +15,58 @@ public partial class Router
 
     private List<RouteEntry> _routeTable = [];
     private RouteContext? _current;
+    private IReadOnlyList<INavMiddleware> _pipeline = Array.Empty<INavMiddleware>();
 
-    protected override void OnInitialized()
+    async protected override Task OnInitializedAsync()
     {
         var assemblies = new List<Assembly> { AppAssembly };
         if (AdditionalAssemblies is not null) assemblies.AddRange(AdditionalAssemblies);
         _routeTable = RouteTableFactory.Build(assemblies);
 
-        NavigateTo(Nav.Uri);
-        Nav.LocationChanged += (_, e) => NavigateTo(e.Location);
+        _pipeline = Services.GetServices<INavMiddleware>().ToList();
+
+        await NavigateAsync(Nav.Uri, firstLoad: true);
+        Nav.LocationChanged += async (_, e) =>
+            await NavigateAsync(e.Location, firstLoad: false);
     }
 
-    private void NavigateTo(string absoluteUri)
+    private async Task NavigateAsync(string absUri, bool firstLoad)
     {
-        var relative = Nav.ToBaseRelativePath(absoluteUri);
-        _current = RouteMatcher.Match(_routeTable, relative);
+        var relative = Nav.ToBaseRelativePath(absUri);
+        var match = RouteMatcher.Match(_routeTable, relative);
+
+        var ctx = new NavContext
+        {
+            TargetUri = absUri,
+            Match = match,
+            CancellationToken = CancellationToken.None
+        };
+
+        var result = await InvokePipelineAsync(ctx, 0);
+
+        if (result.IsCancelled)
+        {
+            // undo browser url when cancelled (except initial load)
+            if (!firstLoad) Nav.NavigateTo(Nav.Uri, forceLoad: false, replace: true);
+            return;
+        }
+        if (result.RedirectUri is not null)
+        {
+            Nav.NavigateTo(result.RedirectUri, forceLoad: false);
+            return;
+        }
+
+        _current = match;
         StateHasChanged();
     }
+
+    private Task<NavResult> InvokePipelineAsync(NavContext ctx, int index)
+    {
+        if (index == _pipeline.Count)
+            return Task.FromResult(NavResult.Continue);
+
+        return _pipeline[index].InvokeAsync(ctx,
+            () => InvokePipelineAsync(ctx, index + 1));
+    }
+
 }

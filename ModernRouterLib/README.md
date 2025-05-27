@@ -22,6 +22,12 @@ ModernRouter is a powerful and flexible routing library for Blazor WebAssembly a
 - Case-Insensitive Matching: Route segments match regardless of case
 - Flexible Template Structure: Support for complex route patterns
 
+### Navigation Middleware Guards
+- Intercept and control navigation requests using middleware
+- Implement authentication, analytics, unsaved changes prompts, and more
+- Middleware are registered as services and executed in order
+- Each middleware can allow, redirect, or cancel navigation
+
 ## Architecture
 
 ModernRouter uses a component-based architecture with these key parts:
@@ -31,6 +37,25 @@ ModernRouter uses a component-based architecture with these key parts:
 3. RouteMatcher: Matches URL paths against route templates
 4. Outlet: Renders matched components at specific locations in the component hierarchy
 5. RouteContext: Encapsulates routing state and parameters
+6. INavMiddleware: Interface for navigation middleware guards
+
+## Middleware Guards
+
+ModernRouter supports a middleware pipeline for navigation, allowing you to add cross-cutting concerns to routing. Middleware guards implement the `INavMiddleware` interface and can:
+- Inspect or modify navigation context
+- Allow, redirect, or cancel navigation
+- Be chained in a configurable order
+
+**Common Middleware Examples:**
+- **AuthGuard**: Restricts access to certain routes based on authentication state
+- **UnsavedGuard**: Prompts users about unsaved changes before navigating away
+- **AnalyticsTap**: Tracks page views or navigation events for analytics
+
+To register middleware guards, add them to the DI container in your `Program.cs`:
+
+    builder.Services.AddScoped<INavMiddleware, AnalyticsTap>();
+    builder.Services.AddScoped<INavMiddleware, AuthGuard>();
+    builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
 
 ## Technical Requirements
 
@@ -45,6 +70,7 @@ ModernRouter uses a component-based architecture with these key parts:
 3. Define routes using page directives on your components
 4. Place Outlet components where nested content should appear
 5. Use strongly-typed parameters in your components
+6. Register any navigation middleware guards as needed
 
 ## Example Usage Patterns
 
