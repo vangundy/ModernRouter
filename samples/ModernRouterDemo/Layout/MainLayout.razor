@@ -1,3 +1,9 @@
 ﻿@inherits LayoutComponentBase
+<div class="container">
+    <Breadcrumbs HomeLabel="Dashboard"
+                 Separator=" › "
+                 CssClass="my-3"
+                 CustomLabels="@(new Dictionary<string, string> { {"admin", "Administration"} })" />
 
-@Body
+    @Body
+</div>

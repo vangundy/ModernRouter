@@ -1,0 +1,31 @@
+@implements IDisposable
+
+<nav aria-label="breadcrumb" class="@CssClass">
+    <ol class="breadcrumb">
+        @foreach (var item in _breadcrumbs)
+        {
+            <li class="breadcrumb-item @(item.IsActive ? "active" : "")" aria-current="@(item.IsActive ? "page" : null)">
+                @if (ItemTemplate != null)
+                {
+                    @ItemTemplate(item)
+                }
+                else
+                {
+                    @if (item.IsActive)
+                    {
+                        @item.Label
+                    }
+                    else
+                    {
+                        <a href="@item.Url">@item.Label</a>
+                    }
+                }
+            </li>
+            
+            @if (!item.IsActive)
+            {
+                <li class="breadcrumb-separator">@((MarkupString)Separator)</li>
+            }
+        }
+    </ol>
+</nav>
