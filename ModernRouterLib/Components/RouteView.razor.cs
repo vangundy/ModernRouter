@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using ModernRouter.Routing;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ModernRouter.Components;
 public partial class RouteView
@@ -8,6 +10,32 @@ public partial class RouteView
     [Parameter] public string[] RemainingSegments { get; set; } = [];
     [Parameter] public Dictionary<string, object?> RouteValues { get; set; } = [];
 
-    private IReadOnlyDictionary<string, object?> _parameters
-        => RouteValues;
+    private object? _loaderData;
+    private bool _loading;
+    private Exception? _loaderException;
+    private IReadOnlyDictionary<string, object?> _parameters => RouteValues;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loaderData = null;
+        _loaderException = null;
+        _loading = false;
+        if (Entry.LoaderType is { } loaderType)
+        {
+            _loading = true;
+            try
+            {
+                var loader = (IRouteDataLoader)Activator.CreateInstance(loaderType)!;
+                _loaderData = await loader.LoadAsync(new RouteContext { Matched = Entry, RemainingSegments = RemainingSegments, RouteValues = RouteValues }, null!, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _loaderException = ex;
+            }
+            finally
+            {
+                _loading = false;
+            }
+        }
+    }
 }

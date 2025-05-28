@@ -1,3 +1,16 @@
-﻿<CascadingValue Value="RemainingSegments">
-    <DynamicComponent Type="Entry.Component" Parameters="_parameters.ToDictionary(k => k.Key, v => v.Value)" />
-</CascadingValue>
+﻿@if (_loading)
+{
+    <p>Loading...</p>
+}
+else if (_loaderException is not null)
+{
+    <p>Error: @_loaderException.Message</p>
+}
+else
+{
+    <CascadingValue Value="_loaderData">
+        <CascadingValue Value="RemainingSegments">
+            <DynamicComponent Type="Entry.Component" Parameters="_parameters.ToDictionary(k => k.Key, v => v.Value)" />
+        </CascadingValue>
+    </CascadingValue>
+}

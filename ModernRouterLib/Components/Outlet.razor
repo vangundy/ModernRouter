@@ -1,7 +1,20 @@
 ﻿@if (RouteContext?.Matched is not null)
 {
-    <CascadingValue Value="RouteContext.RemainingSegments">
-        <DynamicComponent Type="RouteContext.Matched.Component"
-                          Parameters="RouteContext.RouteValues" />
-    </CascadingValue>
+    @if (_loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (_loaderException is not null)
+    {
+        <p>Error: @_loaderException.Message</p>
+    }
+    else
+    {
+        <CascadingValue Value="_loaderData">
+            <CascadingValue Value="RouteContext.RemainingSegments">
+                <DynamicComponent Type="RouteContext.Matched.Component"
+                                  Parameters="RouteContext.RouteValues" />
+            </CascadingValue>
+        </CascadingValue>
+    }
 }

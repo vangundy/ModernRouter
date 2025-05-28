@@ -28,6 +28,12 @@ ModernRouter is a powerful and flexible routing library for Blazor WebAssembly a
 - Middleware are registered as services and executed in order
 - Each middleware can allow, redirect, or cancel navigation
 
+### Async Data Loading
+- Supports async, DI-aware, and cancellable data loaders for routed components
+- Loader runs after navigation guards but before component rendering
+- Loader result is cascaded to the component and all its descendants via [CascadingParameter]
+- Enables efficient data fetching and delivery for each route and nested outlet
+
 ## Architecture
 
 ModernRouter uses a component-based architecture with these key parts:
@@ -38,6 +44,7 @@ ModernRouter uses a component-based architecture with these key parts:
 4. Outlet: Renders matched components at specific locations in the component hierarchy
 5. RouteContext: Encapsulates routing state and parameters
 6. INavMiddleware: Interface for navigation middleware guards
+7. IRouteDataLoader: Interface for async data loaders
 
 ## Middleware Guards
 
@@ -57,6 +64,15 @@ To register middleware guards, add them to the DI container in your `Program.cs`
     builder.Services.AddScoped<INavMiddleware, AuthGuard>();
     builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
 
+## Data Loaders
+
+ModernRouter enables async data loading for routed components:
+- Implement the `IRouteDataLoader` interface for your loader class
+- Attach your loader to a component using the `[RouteDataLoader(typeof(MyLoader))]` attribute
+- The loader's `LoadAsync` method runs after navigation guards and before rendering
+- The loader result is provided to the component and its descendants via `[CascadingParameter]`
+- Supports DI and cancellation tokens for efficient, robust data fetching
+
 ## Technical Requirements
 
 - .NET 9
@@ -71,6 +87,7 @@ To register middleware guards, add them to the DI container in your `Program.cs`
 4. Place Outlet components where nested content should appear
 5. Use strongly-typed parameters in your components
 6. Register any navigation middleware guards as needed
+7. Implement and attach data loaders as needed
 
 ## Example Usage Patterns
 
@@ -78,3 +95,4 @@ To register middleware guards, add them to the DI container in your `Program.cs`
 - Tabbed interfaces with URL-based navigation
 - Wizard-like flows with URL history support
 - Deep-linking to specific application states
+- Async data fetching for each route and nested outlet
