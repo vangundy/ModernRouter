@@ -136,14 +136,12 @@ ModernRouter enables async data loading for routed components:
 - C# 13.0
 - Blazor WebAssembly
 
-## Contributing
 
-Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
 ## License
 
-ModernRouter is licensed under the [MIT License](LICENSE).
+ModernRouter is licensed under the [MIT License](LICENSE.md).
 
 ## Support
 
-For support, please open an issue on the [GitHub repository](https://github.com/ModernRouter/ModernRouter).
+For support, please open an issue on the [GitHub repository](https://github.com/vangundy/ModernRouter/issues).
