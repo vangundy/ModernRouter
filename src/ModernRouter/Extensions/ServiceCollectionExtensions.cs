@@ -81,6 +81,7 @@ internal class ErrorHandlingMiddleware : INavMiddleware
         }
         catch (Exception ex)
         {
+            // TODO: Log the exception
             return NavResult.Error(ex);
         }
     }

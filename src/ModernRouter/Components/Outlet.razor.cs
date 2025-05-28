@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
 
 namespace ModernRouter.Components;
 public partial class Outlet
 {
+    [Inject] private IServiceProvider Services { get; set; } = default!;
     [CascadingParameter] private List<RouteEntry>? RouteTable { get; set; }
     [CascadingParameter] private string[]? Segments { get; set; }
     [CascadingParameter] private RouteContext RouteContext { get; set; } = default!;
@@ -26,8 +28,8 @@ public partial class Outlet
             _loading = true;
             try
             {
-                var loader = (IRouteDataLoader)Activator.CreateInstance(loaderType)!;
-                _loaderData = await loader.LoadAsync(RouteContext, null!, CancellationToken.None);
+                var loader = (IRouteDataLoader)ActivatorUtilities.CreateInstance(Services, loaderType);
+                _loaderData = await loader.LoadAsync(RouteContext, Services, CancellationToken.None);
             }
             catch (Exception ex)
             {

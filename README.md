@@ -1,4 +1,4 @@
-# ModernRouter
+﻿# ModernRouter
 
 A powerful hierarchical routing library for Blazor WebAssembly applications built with .NET 9 and C# 13.0.
 
@@ -176,6 +176,61 @@ builder.Services.AddScoped<INavMiddleware, AnalyticsTap>();
 builder.Services.AddScoped<INavMiddleware, AuthGuard>();
 builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
 ```
+### Middleware Execution Order
+
+In ModernRouter, middleware guards are executed in the same order they're registered in the dependency injection container. This execution order is critical to the proper functioning of your application.
+
+#### How Execution Order Works
+
+1. Middleware are executed sequentially based on registration order
+2. Each middleware receives a `next` delegate that represents the remainder of the pipeline
+3. A middleware can choose to:
+   - Call `next()` to continue the pipeline
+   - Return a result without calling `next()` to short-circuit execution
+
+#### Example: Middleware Execution Flow
+
+Registration order:
+1. LoggingMiddleware
+2. AuthGuard
+3. UnsavedGuard
+
+Execution flow: 
+
+    → LoggingMiddleware (logs request) 
+    → AuthGuard (checks authentication) 
+    → UnsavedGuard (checks unsaved changes)
+    
+    → RouteView rendering 
+
+    ← UnsavedGuard (completes) 
+    ← AuthGuard (completes) 
+    ← LoggingMiddleware (logs completion)
+
+#### Best Practices for Middleware Order
+
+Order your middleware based on their function:
+
+1. **Diagnostic middleware** (logging, metrics) should come first to capture all navigation attempts
+2. **Authentication/authorization middleware** should come early to prevent unnecessary processing
+3. **State preservation middleware** (unsaved changes) should come after auth but before expensive operations
+4. **Validation middleware** that might redirect should come after state preservation
+5. **Analytics middleware** often works best at the end to capture only successful navigations
+
+#### Example: Recommended Registration Order
+
+```csharp
+// Recommended order in Program.cs
+
+// First - logs everything 
+builder.Services.AddScoped<INavMiddleware, LoggingMiddleware>();  
+// Early - prevents unauthorized access 
+builder.Services.AddScoped<INavMiddleware, AuthGuard>();         
+// Middle - preserves user warnings
+builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();      
+```
+
+If your middleware needs to execute in a specific order regardless of registration order, consider implementing an `Order` property in your middleware interface and sorting them before execution.
 
 ## Navigation Results
 
