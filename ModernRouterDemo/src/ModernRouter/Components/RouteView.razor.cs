@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using ModernRouter.Routing;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace ModernRouter.Components;
 public partial class RouteView
