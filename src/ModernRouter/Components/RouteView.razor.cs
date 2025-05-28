@@ -7,6 +7,8 @@ public partial class RouteView
     [Parameter] public RouteEntry Entry { get; set; } = default!;
     [Parameter] public string[] RemainingSegments { get; set; } = [];
     [Parameter] public Dictionary<string, object?> RouteValues { get; set; } = [];
+    [CascadingParameter(Name = "RouterErrorContent")]
+    private RenderFragment<Exception>? RouterErrorContent { get; set; }
 
     private object? _loaderData;
     private bool _loading;
@@ -29,6 +31,7 @@ public partial class RouteView
             catch (Exception ex)
             {
                 _loaderException = ex;
+                throw; // Re-throw to be caught by ErrorBoundary
             }
             finally
             {

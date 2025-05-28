@@ -12,6 +12,7 @@ public partial class Router
     [Parameter] public Assembly AppAssembly { get; set; } = Assembly.GetEntryAssembly()!;
     [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
     [Parameter] public RenderFragment? NotFound { get; set; }
+    [Parameter] public RenderFragment<Exception>? ErrorContent { get; set; }
 
     private List<RouteEntry> _routeTable = [];
     private RouteContext? _current;
@@ -44,15 +45,15 @@ public partial class Router
 
         var result = await InvokePipelineAsync(ctx, 0);
 
-        if (result.IsCancelled)
+        if (result.Type == NavResultType.Cancel)
         {
             // undo browser url when cancelled (except initial load)
             if (!firstLoad) Nav.NavigateTo(Nav.Uri, forceLoad: false, replace: true);
             return;
         }
-        if (result.RedirectUri is not null)
+        if (result.RedirectUrl is not null)
         {
-            Nav.NavigateTo(result.RedirectUri, forceLoad: false);
+            Nav.NavigateTo(result.RedirectUrl, forceLoad: false);
             return;
         }
 
@@ -63,7 +64,7 @@ public partial class Router
     private Task<NavResult> InvokePipelineAsync(NavContext ctx, int index)
     {
         if (index == _pipeline.Count)
-            return Task.FromResult(NavResult.Continue);
+            return Task.FromResult(NavResult.Allow());
 
         return _pipeline[index].InvokeAsync(ctx,
             () => InvokePipelineAsync(ctx, index + 1));

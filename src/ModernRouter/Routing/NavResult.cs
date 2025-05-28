@@ -1,11 +1,23 @@
 ﻿namespace ModernRouter.Routing;
-public readonly record struct NavResult
-{
-    public static readonly NavResult Continue = new();
-    public static NavResult Cancel() => new() { IsCancelled = true };
-    public static NavResult Redirect(string target)
-        => new() { RedirectUri = target };
 
-    public bool IsCancelled { get; init; }
-    public string? RedirectUri { get; init; }
+public enum NavResultType
+{
+    Allow,
+    Redirect,
+    Cancel,
+    Error
+}
+
+public class NavResult
+{
+    public NavResultType Type { get; }
+    public string? RedirectUrl { get; init; }
+    public Exception? Exception { get; init; }
+    
+    public NavResult(NavResultType type) => Type = type;
+    
+    public static NavResult Allow() => new(NavResultType.Allow);
+    public static NavResult Redirect(string url) => new(NavResultType.Redirect) { RedirectUrl = url };
+    public static NavResult Cancel() => new(NavResultType.Cancel);
+    public static NavResult Error(Exception ex) => new(NavResultType.Error) { Exception = ex };
 }

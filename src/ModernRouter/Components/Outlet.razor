@@ -6,15 +6,40 @@
     }
     else if (_loaderException is not null)
     {
-        <p>Error: @_loaderException.Message</p>
+        @if (RouterErrorContent is not null)
+        {
+            @RouterErrorContent(_loaderException)
+        }
+        else
+        {
+            <div class="loader-error">
+                <p>Error: @_loaderException.Message</p>
+            </div>
+        }
     }
     else
     {
-        <CascadingValue Value="_loaderData">
-            <CascadingValue Value="RouteContext.RemainingSegments">
-                <DynamicComponent Type="RouteContext.Matched.Component"
-                                  Parameters="RouteContext.RouteValues" />
-            </CascadingValue>
-        </CascadingValue>
+        <ErrorBoundary>
+            <ChildContent>
+                <CascadingValue Value="_loaderData">
+                    <CascadingValue Value="RouteContext.RemainingSegments">
+                        <DynamicComponent Type="RouteContext.Matched.Component"
+                                          Parameters="RouteContext.RouteValues" />
+                    </CascadingValue>
+                </CascadingValue>
+            </ChildContent>
+            <ErrorContent Context="error">
+                @if (RouterErrorContent is not null)
+                {
+                    @RouterErrorContent(error)
+                }
+                else
+                {
+                    <div class="outlet-error">
+                        <p>Error: @error.Message</p>
+                    </div>
+                }
+            </ErrorContent>
+        </ErrorBoundary>
     }
 }

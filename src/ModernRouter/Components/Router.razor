@@ -5,8 +5,27 @@
 else
 {
     <CascadingValue Value="_routeTable">
-        <ModernRouter.Components.RouteView Entry="_current.Matched"
-                                           RemainingSegments="_current.RemainingSegments"
-                                           RouteValues="_current.RouteValues" />
+        <CascadingValue Value="ErrorContent" Name="RouterErrorContent">
+            <ErrorBoundary>
+                <ChildContent>
+                    <ModernRouter.Components.RouteView Entry="_current.Matched"
+                                                       RemainingSegments="_current.RemainingSegments"
+                                                       RouteValues="_current.RouteValues" />
+                </ChildContent>
+                <ErrorContent Context="error">
+                    @if (ErrorContent is not null)
+                    {
+                        @ErrorContent(error)
+                    }
+                    else
+                    {
+                        <div class="router-error">
+                            <h1>Router Error</h1>
+                            <p>@error.Message</p>
+                        </div>
+                    }
+                </ErrorContent>
+            </ErrorBoundary>
+        </CascadingValue>
     </CascadingValue>
 }

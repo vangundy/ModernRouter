@@ -2,6 +2,20 @@
     <NotFound>
         <h1>¯\_(ツ)_/¯  Not found</h1>
     </NotFound>
+    <ErrorContent Context="error">
+        <div class="error-container">
+            <h2>An error occurred</h2>
+            <p>@error.Message</p>
+            <button @onclick="ReportError">Report Error</button>
+        </div>
+    </ErrorContent>
 </ModernRouter.Components.Router>
+
+@code {
+    private void ReportError()
+    {
+        // Here you could implement logic to report the error, e.g., send it to a logging service
+    }
+}
 
 

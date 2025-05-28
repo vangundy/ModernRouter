@@ -8,9 +8,25 @@ else if (_loaderException is not null)
 }
 else
 {
-    <CascadingValue Value="_loaderData">
-        <CascadingValue Value="RemainingSegments">
-            <DynamicComponent Type="Entry.Component" Parameters="_parameters.ToDictionary(k => k.Key, v => v.Value)" />
-        </CascadingValue>
-    </CascadingValue>
+    <ErrorBoundary>
+        <ChildContent>
+            <CascadingValue Value="_loaderData">
+                <CascadingValue Value="RemainingSegments">
+                    <DynamicComponent Type="Entry.Component" Parameters="_parameters.ToDictionary(k => k.Key, v => v.Value)" />
+                </CascadingValue>
+            </CascadingValue>
+        </ChildContent>
+        <ErrorContent Context="error">
+            @if (RouterErrorContent is not null)
+            {
+                @RouterErrorContent(error)
+            }
+            else
+            {
+                <div class="route-error">
+                    <p>Route Error: @error.Message</p>
+                </div>
+            }
+        </ErrorContent>
+    </ErrorBoundary>
 }

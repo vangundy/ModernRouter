@@ -7,6 +7,8 @@ public partial class Outlet
     [CascadingParameter] private List<RouteEntry>? RouteTable { get; set; }
     [CascadingParameter] private string[]? Segments { get; set; }
     [CascadingParameter] private RouteContext RouteContext { get; set; } = default!;
+    [CascadingParameter(Name = "RouterErrorContent")]
+    private RenderFragment<Exception>? RouterErrorContent { get; set; }
 
     private object? _loaderData;
     private bool _loading;
@@ -30,6 +32,7 @@ public partial class Outlet
             catch (Exception ex)
             {
                 _loaderException = ex;
+                throw; // Re-throw to be caught by ErrorBoundary
             }
             finally
             {

@@ -14,7 +14,9 @@ A powerful hierarchical routing library for Blazor WebAssembly applications buil
 - [Examples](#examples)
 - [Architecture](#architecture)
 - [Middleware Guards](#middleware-guards)
+- [Navigation Results](#navigation-results)
 - [Data Loaders](#data-loaders)
+- [Error Boundaries](#error-boundaries)
 - [Technical Requirements](#technical-requirements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -59,7 +61,9 @@ ModernRouter provides an advanced, hierarchical routing system designed to handl
 ## Installation
 
 To install ModernRouter, add the library to your Blazor WebAssembly project using NuGet:
-dotnet add package ModernRouter
+
+`dotnet add package ModernRouter`
+
 ## Quick Start
 
 1. Add the ModernRouter library to your Blazor WebAssembly project.
@@ -121,6 +125,20 @@ To register middleware guards, add them to the DI container in your `Program.cs`
 builder.Services.AddScoped<INavMiddleware, AnalyticsTap>();
 builder.Services.AddScoped<INavMiddleware, AuthGuard>();
 builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
+
+## Navigation Results
+
+When implementing middleware guards, your middleware returns a `NavResult` that controls how navigation proceeds:
+
+### NavResult Types
+
+- **Allow**: Permits navigation to continue to the requested route
+- **Redirect**: Redirects navigation to a different URL
+- **Cancel**: Prevents navigation from continuing
+- **Error**: Indicates an error occurred during navigation
+
+### Code Examples
+
 ## Data Loaders
 
 ModernRouter enables async data loading for routed components:
@@ -130,13 +148,37 @@ ModernRouter enables async data loading for routed components:
 - The loader result is provided to the component and its descendants via `[CascadingParameter]`.
 - Supports DI and cancellation tokens for efficient, robust data fetching.
 
+## Error Boundaries
+
+ModernRouter includes a robust error boundary system that captures and displays exceptions from all parts of the routing pipeline without crashing your application.
+
+### Comprehensive Error Capture
+
+The error boundary system catches exceptions from all phases of routing:
+
+1. **Navigation Middleware**: When middleware returns `NavResult.Error()` or throws an exception
+2. **Data Loaders**: When a route's data loader throws during `LoadAsync()`
+3. **Component Rendering**: When a component throws during initialization or rendering
+
+### Benefits
+
+- **Circuit Preservation**: Errors are contained without tearing down the Blazor circuit
+- **Contextual Handling**: Different parts of your app can handle errors differently
+- **User Experience**: Provide helpful recovery options instead of blank screens
+- **Nested Recovery**: Child routes can recover independently from parent routes
+- **Consistency**: All error types are channeled through the same error templates
+
+### Example: Error Recovery
+
 ## Technical Requirements
 
 - .NET 9
 - C# 13.0
 - Blazor WebAssembly
 
+## Contributing
 
+Contributions are welcome! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines.
 
 ## License
 
