@@ -31,7 +31,11 @@ internal static class RouteTableFactory
                 foreach (RouteAttribute attr in type.GetCustomAttributes<RouteAttribute>())
                 {
                     var segments = ParseTemplate(attr.Template);
-                    list.Add(new RouteEntry(segments, type));
+                    list.Add(new RouteEntry(segments, type)
+                    {
+                        // Store all attributes from the component
+                        Attributes = type.GetCustomAttributes().ToArray()
+                    });
                 }
             }
         }

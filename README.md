@@ -17,6 +17,8 @@ A powerful hierarchical routing library for Blazor WebAssembly applications buil
 - [Navigation Results](#navigation-results)
 - [Data Loaders](#data-loaders)
 - [Error Boundaries](#error-boundaries)
+- [Route Metadata and Authorization](#route-metadata-and-authorization)
+- [Implementing Authorization Service](#implementing-authorization-service)
 - [Technical Requirements](#technical-requirements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -67,14 +69,61 @@ To install ModernRouter, add the library to your Blazor WebAssembly project usin
 ## Quick Start
 
 1. Add the ModernRouter library to your Blazor WebAssembly project.
-2. Set up your main router in `App.razor`.
-3. Define routes using page directives on your components.
-4. Place `Outlet` components where nested content should appear.
-5. Use strongly-typed parameters in your components.
-6. Register any navigation middleware guards as needed.
-7. Implement and attach data loaders as needed.
+2. Register ModernRouter services in your `Program.cs`:
+```csharp
+// basic setup
+builder.Services.AddModernRouter();
+// Or with authorization support 
+builder.Services.AddModernRouterWithAuthorization(options => 
+{ 
+    options.LoginPath = "/auth/login"; 
+    options.ForbiddenPath = "/unauthorized"; 
+});
+```
+3. Set up your main router in `App.razor`:
+```razor
+<ModernRouter.Components.Router AppAssembly="@typeof(Program).Assembly"> 
+    <NotFound> 
+        <h1>Page not found</h1> 
+    </NotFound> 
+    <ErrorContent Context="exception"> 
+        <div class="error-container"> 
+            <h2>An error occurred</h2> 
+            <p>@exception.Message</p> 
+        </div> 
+    </ErrorContent> 
+</ModernRouter.Components.Router>
+```
+4. Define routes using page directives on your components.
+5. Place `Outlet` components where nested content should appear.
+6. Use strongly-typed parameters in your components.
+7. Register any navigation middleware guards as needed.
+8. Implement and attach data loaders as needed.
 
 ## Examples
+
+### Basic Route Component
+
+```razor
+@page "/products" @page "/products/{Category}"
+<h1>Products @(Category ?? "All Categories")</h1>
+@code { 
+    [Parameter] public string? Category { get; set; } 
+}
+```
+
+### Using Nested Routes
+
+```razor
+@page "/admin"
+<h1>Admin Dashboard</h1>
+<nav> 
+    <NavLink href="/admin/users">Users</NavLink> 
+    <NavLink href="/admin/settings">Settings</NavLink> 
+</nav>
+<Outlet />
+
+```
 
 ### Master-Detail Views
 
@@ -122,9 +171,11 @@ ModernRouter supports a middleware pipeline for navigation, allowing you to add 
 - **AnalyticsTap**: Tracks page views or navigation events for analytics.
 
 To register middleware guards, add them to the DI container in your `Program.cs`:
+```csharp
 builder.Services.AddScoped<INavMiddleware, AnalyticsTap>();
 builder.Services.AddScoped<INavMiddleware, AuthGuard>();
 builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
+```
 
 ## Navigation Results
 
@@ -139,6 +190,54 @@ When implementing middleware guards, your middleware returns a `NavResult` that 
 
 ### Code Examples
 
+```csharp
+// Allow navigation to continue 
+public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next) 
+{ 
+    // Perform checks or operations 
+    return await next(); 
+    // Continue to next middleware or complete navigation 
+}
+
+// Redirect to login 
+public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next) 
+{ 
+    if (!_authService.IsAuthenticated) 
+    { 
+        return NavResult.Redirect("/login?returnUrl=" + Uri.EscapeDataString(ctx.Path)); 
+    }
+    return await next(); 
+}
+
+// Cancel navigation with unsaved changes 
+public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next) 
+{ 
+    if (_editState.HasUnsavedChanges) 
+    { 
+        var confirmed = await _dialogService.ConfirmAsync("You have unsaved changes. Continue anyway?"); 
+        if (!confirmed) 
+        { 
+            return NavResult.Cancel(); 
+        } 
+    } 
+    return await next(); 
+}
+
+// Return navigation error 
+public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next) 
+{ 
+    try 
+    { 
+        return await next(); 
+    } 
+    catch (Exception ex) 
+    { 
+        _logger.LogError(ex, "Navigation error"); 
+        return NavResult.Error(ex); 
+    } 
+}
+```
+
 ## Data Loaders
 
 ModernRouter enables async data loading for routed components:
@@ -148,9 +247,47 @@ ModernRouter enables async data loading for routed components:
 - The loader result is provided to the component and its descendants via `[CascadingParameter]`.
 - Supports DI and cancellation tokens for efficient, robust data fetching.
 
+### Using a Data Loader
+
+```csharp
+public class ProductLoader : IRouteDataLoader<ProductData> 
+{ 
+    private readonly IProductService _productService;
+    public ProductLoader(IProductService productService)
+    {
+        _productService = productService;
+    }
+    
+    public async Task<ProductData> LoadAsync(RouteContext context, CancellationToken cancellationToken)
+    {
+        string productId = context.Parameters["id"]?.ToString() ?? "";
+        return await _productService.GetProductAsync(productId, cancellationToken);
+    }
+}
+```
+
 ## Error Boundaries
 
 ModernRouter includes a robust error boundary system that captures and displays exceptions from all parts of the routing pipeline without crashing your application.
+
+### Global Error Handling
+
+Define application-wide error handling by providing an `ErrorContent` template to the Router component:
+
+```razor
+<ModernRouter.Components.Router AppAssembly="@typeof(Program).Assembly"> 
+    <NotFound> 
+        <h1>Page not found</h1>
+    </NotFound>
+    <ErrorContent Context="exception"> 
+        <div class="error-container"> 
+            <h2>An error occurred</h2> 
+            <p>@exception.Message</p> 
+            <button @onclick="RetryNavigation">Retry</button> 
+        </div> 
+    </ErrorContent> 
+</ModernRouter.Components.Router>
+```
 
 ### Comprehensive Error Capture
 
@@ -169,6 +306,166 @@ The error boundary system catches exceptions from all phases of routing:
 - **Consistency**: All error types are channeled through the same error templates
 
 ### Example: Error Recovery
+
+```csharp
+@page "/products/{id:int}" 
+@attribute [RouteDataLoader(typeof(ProductLoader))] 
+@inject ProductService ProductService
+<h1>Product Details</h1>
+@if (_loadError && _product == null) 
+{ 
+    <div class="alert alert-danger"> <p>Failed to load product. Please try again.</p> <button @onclick="RetryLoad" class="btn btn-primary">Retry</button> </div> 
+} 
+else if (_product != null) 
+{ 
+    <div class="product-details"> <h2>@_product.Name</h2> <p>@_product.Description</p> <p>Price: @_product.Price.ToString("C")</p> </div> 
+}
+
+@code { 
+    [CascadingParameter] private ProductData? _product { get; set; } 
+    [Parameter] public int Id { get; set; } 
+    private bool _loadError;
+    
+    private async Task RetryLoad()
+    {
+        try {
+            _loadError = false;
+            await ProductService.RefreshProductAsync(Id);
+            // Navigation will reload the component with fresh data
+            await NavManager.RefreshCurrentAsync();
+        }
+        catch {
+            _loadError = true;
+        }
+    }
+}
+```
+
+### Per-View Error Boundaries
+
+Each route and outlet can define its own error boundary for more contextual error handling:
+
+```csharp
+<div class="dashboard-panel"> 
+    <h3>User Statistics</h3> 
+    <Outlet Name="userStats"> 
+        <ErrorContent Context="error"> 
+            <div class="panel-error"> 
+                <p>Failed to load user statistics: @error.Message</p> 
+                <button @onclick="RefreshStats">Retry</button> 
+            </div> 
+        </ErrorContent> 
+    </Outlet>
+</div>
+```
+
+## Route Metadata and Authorization
+
+ModernRouter extracts component attributes into route entries, allowing middleware to access metadata without runtime reflection.
+
+### Applying Metadata to Routes
+
+Add attributes to your component classes:
+
+```csharp
+[Authorize]
+[RouteDataLoader(typeof(ProductLoader))] 
+public class ProductDetail : ComponentBase 
+{ // Component implementation }
+
+```
+
+### Built-in Authorization Support
+
+ModernRouter includes ASP.NET Core-compatible authorization attributes:
+
+- **[Authorize]**: Requires authenticated user
+- **[Authorize(Roles = "Admin,Manager")]**: Requires specific roles
+- **[Authorize(Policy = "CanEditContent")]**: Requires policy-based authorization
+- **[AllowAnonymous]**: Overrides authorization requirements
+
+### Creating Custom Metadata Attributes
+
+You can create and consume your own route metadata attributes:
+```csharp
+// Define attribute 
+[AttributeUsage(AttributeTargets.Class)] public class FeatureFlagAttribute : Attribute 
+{ 
+    public string FeatureName { get; } 
+    public FeatureFlagAttribute(string featureName) => FeatureName = featureName; 
+}
+// Apply to component 
+[FeatureFlag("BetaFeature")] 
+[Route("/beta-feature")] 
+public class BetaComponent : ComponentBase { }
+
+// Use in middleware 
+public class FeatureFlagMiddleware : INavMiddleware 
+{ 
+    private readonly IFeatureService _featureService;
+    public FeatureFlagMiddleware(IFeatureService featureService)
+    {
+        _featureService = featureService;
+    }
+    
+    public Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next)
+    {
+        if (ctx.Match?.Matched is null)
+            return next();
+            
+        var flagAttr = ctx.Match.Matched.Attributes
+                        .OfType<FeatureFlagAttribute>()
+                        .FirstOrDefault();
+                        
+        if (flagAttr != null && !_featureService.IsEnabled(flagAttr.FeatureName))
+            return Task.FromResult(NavResult.Redirect("/feature-disabled"));
+            
+        return next();
+    }
+}
+
+```
+
+### Registering Authorization
+
+```csharp
+// Program.cs 
+builder.Services.AddSingleton<IAuthorizationService, YourAuthService>(); 
+builder.Services.AddScoped<INavMiddleware, AuthorizationMiddleware>();
+
+```
+
+## Implementing Authorization Service
+
+```csharp
+public class YourAuthService : IAuthorizationService 
+{ 
+    private readonly AuthenticationStateProvider _authStateProvider;
+    public YourAuthService(AuthenticationStateProvider authStateProvider)
+    {
+        _authStateProvider = authStateProvider;
+    }
+    
+    public bool IsAuthenticated()
+    {
+        var authState = _authStateProvider.GetAuthenticationStateAsync().Result;
+        return authState.User.Identity?.IsAuthenticated ?? false;
+    }
+    
+    public bool IsInRoles(IEnumerable<string> roles)
+    {
+        var authState = _authStateProvider.GetAuthenticationStateAsync().Result;
+        return roles.Any(role => authState.User.IsInRole(role));
+    }
+    
+    public async Task<bool> AuthorizeAsync(string policy)
+    {
+        // Your policy-based authorization logic here
+        return await Task.FromResult(true);
+    }
+}
+
+```
 
 ## Technical Requirements
 
