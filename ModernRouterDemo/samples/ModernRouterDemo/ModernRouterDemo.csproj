@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ModernRouterLib\ModernRouter.csproj" />
+    <ProjectReference Include="..\..\src\ModernRouter\ModernRouter.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36121.58
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModernRouterDemo", "ModernRouterDemo.csproj", "{419B8CF4-5721-4F83-8873-24A3D62C728E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModernRouter", "src\ModernRouter\ModernRouter.csproj", "{0142AEDC-ABE7-CE1F-9AA3-73DF48CF95CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModernRouter", "..\ModernRouterLib\ModernRouter.csproj", "{445A2B64-F448-4997-E460-078B0ED8C15B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModernRouterDemo", "samples\ModernRouterDemo\ModernRouterDemo.csproj", "{C557E88D-8799-F0CF-95FD-5F152AAD0FD3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{419B8CF4-5721-4F83-8873-24A3D62C728E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{419B8CF4-5721-4F83-8873-24A3D62C728E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{419B8CF4-5721-4F83-8873-24A3D62C728E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{419B8CF4-5721-4F83-8873-24A3D62C728E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{445A2B64-F448-4997-E460-078B0ED8C15B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{445A2B64-F448-4997-E460-078B0ED8C15B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{445A2B64-F448-4997-E460-078B0ED8C15B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{445A2B64-F448-4997-E460-078B0ED8C15B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0142AEDC-ABE7-CE1F-9AA3-73DF48CF95CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0142AEDC-ABE7-CE1F-9AA3-73DF48CF95CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0142AEDC-ABE7-CE1F-9AA3-73DF48CF95CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0142AEDC-ABE7-CE1F-9AA3-73DF48CF95CC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C557E88D-8799-F0CF-95FD-5F152AAD0FD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C557E88D-8799-F0CF-95FD-5F152AAD0FD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C557E88D-8799-F0CF-95FD-5F152AAD0FD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C557E88D-8799-F0CF-95FD-5F152AAD0FD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
