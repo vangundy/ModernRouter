@@ -484,3 +484,27 @@ ModernRouter is licensed under the [MIT License](LICENSE.md).
 ## Support
 
 For support, please open an issue on the [GitHub repository](https://github.com/vangundy/ModernRouter/issues).
+
+##TODO
+
+- [ ] Add more examples and documentation for advanced scenarios
+- [ ] Implement breadcrumb component that renders based on router state 
+- [ ] Add support for global progress indicators during navigation.  Approach: Pass a <LoadingContent> fragment to the Router component that will be displayed during navigation. It flows to all nested outlets.
+- [ ] Add support for lazy loading of route components
+- [ ] Implement route prefetching for improved performance
+- [ ] Add support for scroll restoration on navigation
+- [ ] Implement route transition animations
+- [ ] Add support for query string parameters in routes
+- [ ] Implement route guards for specific conditions
+- [ ] Add support for source generation of route tables to improve performance. Approach: Use source generators to analyze route attributes and generate a strongly-typed route table (route manifest) at compile time using Roslyn Source Generator.
+- [ ] Concurrent prefetching of data loaders. Approach: Schedule LoadAsync for all data loaders in parallel, then wait for all to complete before rendering the component. Requires a manifest walk.
+- [ ] Add support for route aliases
+- [ ] Implement caching for loaders to enhance performance and reduce redundant data fetching.
+- [ ] Build-time type safety for loaders. Approach: Use source generators to validate loader signatures at compile time.
+- [ ] Per navigation DI scope for loaders and middleware. Approach: Create a scoped service provider for each navigation that can be injected into loaders and middleware.
+- [ ] Support Blazor server-side scenarios. 
+- [ ] Link prefetch eliminates first-click delay by prefetching route data when hovering over links.
+- [ ] Optimistic UI skeleton loading for data-heavy routes.
+- [ ] Nav error toast notifications for better user feedback.
+- [ ] Route aware devtools for debugging and inspection.
+- [ ] Prefetch header hints for improved performance leveraging HTTP/2 multiplexing.
