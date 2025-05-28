@@ -6,7 +6,7 @@ namespace ModernRouter.Components;
 public partial class RouteView
 {
     [Inject] private IServiceProvider Services { get; set; } = default!;
-    [Parameter] public RouteEntry Entry { get; set; } = default!;
+    [Parameter] public RouteEntry RouteEntry { get; set; } = default!;
     [Parameter] public string[] RemainingSegments { get; set; } = [];
     [Parameter] public Dictionary<string, object?> RouteValues { get; set; } = [];
     [CascadingParameter(Name = "RouterErrorContent")]
@@ -21,14 +21,14 @@ public partial class RouteView
         _loaderData = null;
         _loaderException = null;
         _loading = false;
-        if (Entry.LoaderType is { } loaderType)
+        if (RouteEntry.LoaderType is { } loaderType)
         {
             _loading = true;
             try
             {
                 var loader = (IRouteDataLoader)ActivatorUtilities.CreateInstance(Services, loaderType);
                 _loaderData = await loader.LoadAsync(
-                    new RouteContext { Matched = Entry, RemainingSegments = RemainingSegments, RouteValues = RouteValues },
+                    new RouteContext { Matched = RouteEntry, RemainingSegments = RemainingSegments, RouteValues = RouteValues },
                     Services,
                     CancellationToken.None
                 );

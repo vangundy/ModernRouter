@@ -1,7 +1,10 @@
-﻿@page "/details/{LineId:int}/{*Subsection}"
+﻿@page "/details/{LineId:int}/{*Slug}"
 
 <p>Order details for ID: @LineId will be displayed here.</p>
-<p>Additional Section: @Subsection</p>
+@if (!string.IsNullOrEmpty(Slug))
+{
+    <p>Slug: @Slug</p>
+}
 
 @code {
 
@@ -9,5 +12,5 @@
     public int LineId { get; set; }
 
     [Parameter]
-    public string Subsection { get; set; } = string.Empty;
+    public string Slug { get; set; } = string.Empty;
 }
