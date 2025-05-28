@@ -15,7 +15,6 @@ public partial class RouteView
     private object? _loaderData;
     private bool _loading;
     private Exception? _loaderException;
-    private IReadOnlyDictionary<string, object?> _parameters => RouteValues;
 
     protected override async Task OnParametersSetAsync()
     {

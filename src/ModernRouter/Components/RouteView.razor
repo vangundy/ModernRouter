@@ -10,9 +10,9 @@ else
 {
     <ErrorBoundary>
         <ChildContent>
-            <CascadingValue Value="_loaderData">
-                <CascadingValue Value="RemainingSegments">
-                    <DynamicComponent Type="Entry.Component" Parameters="_parameters.ToDictionary(k => k.Key, v => v.Value)" />
+            <CascadingValue IsFixed="true" Value="_loaderData">
+                <CascadingValue IsFixed="true" Value="RemainingSegments">
+                    <DynamicComponent Type="Entry.Component" Parameters="RouteValues" />
                 </CascadingValue>
             </CascadingValue>
         </ChildContent>

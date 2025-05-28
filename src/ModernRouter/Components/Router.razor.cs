@@ -24,26 +24,26 @@ public partial class Router
         if (AdditionalAssemblies is not null) assemblies.AddRange(AdditionalAssemblies);
         _routeTable = RouteTableFactory.Build(assemblies);
 
-        _pipeline = Services.GetServices<INavMiddleware>().ToList();
+        _pipeline = [.. Services.GetServices<INavMiddleware>()];
 
         await NavigateAsync(Nav.Uri, firstLoad: true);
         Nav.LocationChanged += async (_, e) =>
             await NavigateAsync(e.Location, firstLoad: false);
     }
 
-    private async Task NavigateAsync(string absUri, bool firstLoad)
+    private async Task NavigateAsync(string absoluteUri, bool firstLoad)
     {
-        var relative = Nav.ToBaseRelativePath(absUri);
+        var relative = Nav.ToBaseRelativePath(absoluteUri);
         var match = RouteMatcher.Match(_routeTable, relative);
 
-        var ctx = new NavContext
+        var navContext = new NavContext
         {
-            TargetUri = absUri,
+            TargetUri = absoluteUri,
             Match = match,
             CancellationToken = CancellationToken.None
         };
 
-        var result = await InvokePipelineAsync(ctx, 0);
+        var result = await InvokePipelineAsync(navContext, 0);
 
         if (result.Type == NavResultType.Cancel)
         {
@@ -61,13 +61,12 @@ public partial class Router
         StateHasChanged();
     }
 
-    private Task<NavResult> InvokePipelineAsync(NavContext ctx, int index)
+    private Task<NavResult> InvokePipelineAsync(NavContext navContext, int index)
     {
         if (index == _pipeline.Count)
             return Task.FromResult(NavResult.Allow());
 
-        return _pipeline[index].InvokeAsync(ctx,
-            () => InvokePipelineAsync(ctx, index + 1));
+        return _pipeline[index].InvokeAsync(navContext, () => InvokePipelineAsync(navContext, index + 1));
     }
 
 }

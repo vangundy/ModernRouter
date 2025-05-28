@@ -105,7 +105,8 @@ builder.Services.AddModernRouterWithAuthorization(options =>
 ### Basic Route Component
 
 ```razor
-@page "/products" @page "/products/{Category}"
+@page "/products" 
+@page "/products/{Category}"
 <h1>Products @(Category ?? "All Categories")</h1>
 @code { 
     [Parameter] public string? Category { get; set; } 
