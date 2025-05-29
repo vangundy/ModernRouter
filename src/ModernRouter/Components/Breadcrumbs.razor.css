@@ -1,0 +1,94 @@
+﻿/* Breadcrumb container */
+.breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    list-style: none;
+    background-color: rgba(0, 0, 0, 0.03);
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Breadcrumb item */
+.breadcrumb-item {
+    display: flex;
+    align-items: center;
+    color: var(--breadcrumb-color, #6c757d);
+    text-decoration: none;
+    background-color: transparent;
+}
+
+/* Breadcrumb separator */
+.breadcrumb-separator {
+    content: "/";
+    display: inline-block;
+    padding: 0 0.5rem;
+    color: var(--breadcrumb-divider-color, #6c757d);
+}
+
+/* Current/active breadcrumb */
+.breadcrumb-item.active {
+    color: var(--breadcrumb-active-color, #495057);
+    font-weight: 500;
+}
+
+/* Link styling */
+.breadcrumb-item a {
+    color: var(--breadcrumb-link-color, #007bff);
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--breadcrumb-link-hover-color, #0056b3);
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .breadcrumbs {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Truncate long breadcrumbs on mobile */
+    .breadcrumb-item {
+        max-width: 120px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Optional: Condensed variant */
+.breadcrumbs-condensed {
+    padding: 0.5rem;
+    background-color: transparent;
+}
+
+/* Optional: Pill style variant */
+.breadcrumbs-pills .breadcrumb-item {
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    background-color: rgba(0, 0, 0, 0.05);
+    margin-right: 0.5rem;
+}
+
+.breadcrumbs-pills .breadcrumb-separator {
+    content: none;
+}
+
+.breadcrumbs-pills .breadcrumb-item.active {
+    background-color: var(--breadcrumb-active-bg, #007bff);
+    color: white;
+}
+
+/* Optional: Arrow style */
+.breadcrumbs-arrows .breadcrumb-separator {
+    content: "›";
+    font-size: 1.2em;
+    line-height: 1;
+    padding: 0 0.5rem;
+}

@@ -68,7 +68,7 @@ public partial class Breadcrumbs
             string segment = segments[i];
             
             // Skip segments that are likely route parameters (might need refinement)
-            if (segment.StartsWith("{") && segment.EndsWith("}"))
+            if (segment.StartsWith('{') && segment.EndsWith('}'))
                 continue;
                 
             // Build the current path 

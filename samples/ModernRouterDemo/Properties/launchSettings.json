@@ -3,6 +3,7 @@
     "ModernRouterDemo": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "https://localhost:54260/home",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

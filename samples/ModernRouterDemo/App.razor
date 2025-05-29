@@ -1,15 +1,17 @@
-﻿<ModernRouter.Components.Router AppAssembly="@typeof(Program).Assembly">
-    <NotFound>
-        <h1>¯\_(ツ)_/¯  Not found</h1>
-    </NotFound>
-    <ErrorContent Context="error">
-        <div class="error-container">
-            <h2>An error occurred</h2>
-            <p>@error.Message</p>
-            <button @onclick="ReportError">Report Error</button>
-        </div>
-    </ErrorContent>
-</ModernRouter.Components.Router>
+﻿<LayoutView Layout="@typeof(ModernRouterDemo.Layout.MainLayout)">
+    <ModernRouter.Components.Router AppAssembly="@typeof(Program).Assembly">
+        <NotFound>
+            <h1>¯\_(ツ)_/¯  Not found</h1>
+        </NotFound>
+        <ErrorContent Context="error">
+            <div class="error-container">
+                <h2>An error occurred</h2>
+                <p>@error.Message</p>
+                <button @onclick="ReportError">Report Error</button>
+            </div>
+        </ErrorContent>
+    </ModernRouter.Components.Router>
+</LayoutView>
 
 @code {
     private void ReportError()

@@ -1,7 +1,7 @@
 @implements IDisposable
 
 <nav aria-label="breadcrumb" class="@CssClass">
-    <ol class="breadcrumb">
+    <ol class="breadcrumbs">
         @foreach (var item in _breadcrumbs)
         {
             <li class="breadcrumb-item @(item.IsActive ? "active" : "")" aria-current="@(item.IsActive ? "page" : null)">

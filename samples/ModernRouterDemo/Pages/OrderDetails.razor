@@ -1,4 +1,6 @@
-﻿@page "/details/{LineId:int}/{*Slug}"
+﻿
+
+<PageTitle>Order Details</PageTitle>
 
 <p>Order details for ID: @LineId will be displayed here.</p>
 @if (!string.IsNullOrEmpty(Slug))
@@ -6,11 +8,4 @@
     <p>Slug: @Slug</p>
 }
 
-@code {
 
-    [Parameter]
-    public int LineId { get; set; }
-
-    [Parameter]
-    public string Slug { get; set; } = string.Empty;
-}

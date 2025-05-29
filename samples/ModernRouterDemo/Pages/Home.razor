@@ -1,7 +1,21 @@
 ﻿@page "/home"
+@using Microsoft.AspNetCore.Components.Routing
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+<NavLink href="orders" class="btn btn-primary">
+    Go to Orders
+</NavLink>
+<NavLink href="orders/1" class="btn btn-primary">
+    Go to Order 1
+</NavLink>
+<NavLink href="orders/1/details/1" class="btn btn-primary">
+    Go to Order Details
+</NavLink>
+<NavLink href="orders/1/details/1/some-slug" class="btn btn-primary">
+    Go to Order Details with Slug
+</NavLink>

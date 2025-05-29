@@ -29,7 +29,7 @@ public static class RouteMatcher
         remaining = [];
         values = [];
 
-        var pIdx = 0;                       // index into path
+        var pIdx = 0;
 
         for (var tIdx = 0; tIdx < template.Length; tIdx++)
         {

@@ -1,4 +1,6 @@
-﻿@page "/orders/{id:int?}"
+﻿
+
+<PageTitle>Orders</PageTitle>
 
 @if (id is null)
 {
@@ -10,8 +12,4 @@ else
 }
 <Outlet />
 
-@code {
 
-    [Parameter]
-    public int? id { get; set; }
-}
