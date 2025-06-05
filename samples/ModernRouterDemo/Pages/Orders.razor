@@ -1,4 +1,4 @@
-﻿
+﻿@using Microsoft.AspNetCore.Components.Routing
 
 <PageTitle>Orders</PageTitle>
 
@@ -10,6 +10,16 @@ else
 {
     <h2>Order ID: @id</h2>
 }
+<a @onclick="@(() => NavigationManager.NavigateTo("orders/1"))" class="btn btn-primary">
+    Go to Order 1
+</a>
+<a @onclick="@(() => NavigationManager.NavigateTo("orders/1/details/1"))" class="btn btn-primary">
+    Go to Order Details
+</a>
+<a @onclick="@(() => NavigationManager.NavigateTo("orders/1/details/1/some-slug"))" class="btn btn-primary">
+    Go to Order Details with Slug
+</a>
+
 <Outlet />
 
 

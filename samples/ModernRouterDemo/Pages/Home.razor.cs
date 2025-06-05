@@ -1,13 +1,8 @@
 using Microsoft.AspNetCore.Components;
 
 namespace ModernRouterDemo.Pages;
-
-[Route("orders/{id:int?}")]
-public partial class Orders
+public partial class Home
 {
-    [Parameter]
-    public int? id { get; set; }
-
     [Inject]
     public NavigationManager NavigationManager { get; set; } = default!;
 }
