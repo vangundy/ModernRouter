@@ -3,7 +3,13 @@ public static class RouteMatcher
 {
     public static RouteContext Match(IEnumerable<RouteEntry> entries, string path)
     {
-        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        // Separate path from query string
+        var questionMarkIndex = path.IndexOf('?');
+        var pathPart = questionMarkIndex >= 0 ? path[..questionMarkIndex] : path;
+        var queryPart = questionMarkIndex >= 0 ? path[questionMarkIndex..] : string.Empty;
+        
+        var segments = pathPart.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var queryParameters = new QueryParameters(queryPart);
 
         foreach (var entry in entries)
         {
@@ -14,11 +20,15 @@ public static class RouteMatcher
                 {
                     Matched = entry,
                     RemainingSegments = remaining,
-                    RouteValues = values
+                    RouteValues = values,
+                    QueryParameters = queryParameters
                 };
             }
         }
-        return new RouteContext(); // no match
+        return new RouteContext 
+        { 
+            QueryParameters = queryParameters 
+        }; // no match but preserve query parameters
     }
 
     private static bool TryMatch(
