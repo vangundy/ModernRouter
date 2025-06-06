@@ -8,7 +8,9 @@ public static class RouteMatcher
         var pathPart = questionMarkIndex >= 0 ? path[..questionMarkIndex] : path;
         var queryPart = questionMarkIndex >= 0 ? path[questionMarkIndex..] : string.Empty;
         
-        var segments = pathPart.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var segments = pathPart.Split('/', StringSplitOptions.RemoveEmptyEntries)
+                              .Select(UrlEncoder.DecodeRouteParameter)
+                              .ToArray();
         var queryParameters = new QueryParameters(queryPart);
 
         foreach (var entry in entries)
@@ -38,60 +40,78 @@ public static class RouteMatcher
     {
         remaining = [];
         values = [];
-
         var pIdx = 0;
 
         for (var tIdx = 0; tIdx < template.Length; tIdx++)
         {
             var seg = template[tIdx];
 
-            // CATCH-ALL
             if (seg.IsCatchAll)
             {
-                var joined = string.Join('/', path[pIdx..]);
-                values[seg.ParameterName] = joined;
-                remaining = [];   // nothing left for deeper outlets
-                return true;
+                return HandleCatchAllSegment(seg, path, pIdx, values, out remaining);
             }
 
-            // PATH EXHAUSTED
             if (pIdx >= path.Length)
             {
-                if (seg.IsOptional)
-                {   // supply null/default and keep going
-                    values[seg.ParameterName] = null;
-                    continue;
-                }
-                return false;
+                return HandlePathExhausted(seg, values);
             }
 
             var part = path[pIdx];
 
-            // LITERAL
             if (!seg.IsParameter)
             {
-                if (!part.Equals(seg.Literal, StringComparison.OrdinalIgnoreCase))
+                if (!HandleLiteralSegment(seg, part))
                     return false;
-                pIdx++;                    // advance path
+                pIdx++;
                 continue;
             }
 
-            // PARAMETER (non-catch-all)
-            if (seg.Converter is null)
-            {   // string
-                values[seg.ParameterName] = part;
-            }
-            else
-            {   // constrained
-                var (ok, val) = seg.Converter(part);
-                if (!ok) return false;
-                values[seg.ParameterName] = val;
-            }
+            if (!HandleParameterSegment(seg, part, values))
+                return false;
+                
             pIdx++;
         }
 
-        // whatever wasn't consumed is for the next outlet
         remaining = pIdx < path.Length ? path[pIdx..] : [];
+        return true;
+    }
+
+    private static bool HandleCatchAllSegment(RouteSegment seg, string[] path, int pIdx, 
+        Dictionary<string, object?> values, out string[] remaining)
+    {
+        var joined = string.Join('/', path[pIdx..]);
+        values[seg.ParameterName] = joined;
+        remaining = [];
+        return true;
+    }
+
+    private static bool HandlePathExhausted(RouteSegment seg, Dictionary<string, object?> values)
+    {
+        if (seg.IsOptional)
+        {
+            values[seg.ParameterName] = null;
+            return true;
+        }
+        return false;
+    }
+
+    private static bool HandleLiteralSegment(RouteSegment seg, string part)
+    {
+        return part.Equals(seg.Literal, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HandleParameterSegment(RouteSegment seg, string part, Dictionary<string, object?> values)
+    {
+        if (seg.Converter is null)
+        {
+            values[seg.ParameterName] = part;
+            return true;
+        }
+        
+        var (ok, val) = seg.Converter(part);
+        if (!ok) return false;
+        
+        values[seg.ParameterName] = val;
         return true;
     }
 }

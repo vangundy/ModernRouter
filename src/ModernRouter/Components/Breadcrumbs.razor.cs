@@ -71,10 +71,10 @@ public partial class Breadcrumbs
             if (segment.StartsWith('{') && segment.EndsWith('}'))
                 continue;
                 
-            // Build the current path 
+            // Build the current path with URL encoding
             if (currentPath.Length > 0)
                 currentPath.Append('/');
-            currentPath.Append(segment);
+            currentPath.Append(UrlEncoder.EncodeRouteParameter(segment));
             
             string url = $"/{currentPath}";
             string label = GetLabelForSegment(segment);
@@ -114,7 +114,8 @@ public partial class Breadcrumbs
                 
                 if (breadcrumb.Url.Contains($"{{{paramName}}}"))
                 {
-                    breadcrumb.Url = breadcrumb.Url.Replace($"{{{paramName}}}", paramValue);
+                    var encodedValue = UrlEncoder.EncodeRouteParameter(paramValue);
+                    breadcrumb.Url = breadcrumb.Url.Replace($"{{{paramName}}}", encodedValue);
                 }
             }
         }

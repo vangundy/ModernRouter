@@ -34,6 +34,45 @@ public static class NavigationExtensions
     }
 
     /// <summary>
+    /// Navigates to the specified route with route parameters and query parameters
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeTemplate">Route template (e.g., "/users/{id}/posts/{slug}")</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="queryParameters">Query parameters to append</param>
+    /// <param name="forceLoad">Whether to force load the page</param>
+    /// <param name="replace">Whether to replace the current entry in history</param>
+    public static void NavigateToRoute(this NavigationManager navigationManager, string routeTemplate, 
+        Dictionary<string, object?> routeValues, QueryParameters? queryParameters = null, 
+        bool forceLoad = false, bool replace = false)
+    {
+        var path = UrlEncoder.BuildPath(routeTemplate, routeValues);
+        
+        if (queryParameters != null && queryParameters.Count > 0)
+        {
+            navigationManager.NavigateTo(path, queryParameters, forceLoad, replace);
+        }
+        else
+        {
+            navigationManager.NavigateTo(path, forceLoad, replace);
+        }
+    }
+
+    /// <summary>
+    /// Navigates to the specified route with route parameters
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeTemplate">Route template (e.g., "/users/{id}")</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="forceLoad">Whether to force load the page</param>
+    /// <param name="replace">Whether to replace the current entry in history</param>
+    public static void NavigateToRoute(this NavigationManager navigationManager, string routeTemplate, 
+        Dictionary<string, object?> routeValues, bool forceLoad = false, bool replace = false)
+    {
+        NavigateToRoute(navigationManager, routeTemplate, routeValues, null, forceLoad, replace);
+    }
+
+    /// <summary>
     /// Navigates to the current URI with updated query parameters
     /// </summary>
     /// <param name="navigationManager">Navigation manager instance</param>
