@@ -160,46 +160,62 @@ public static class UrlEncoder
         if (string.IsNullOrEmpty(template))
             return string.Empty;
 
-        // Validate route values if requested
         if (validateParameters)
         {
-            foreach (var kvp in routeValues)
+            ValidateRouteParameters(routeValues);
+        }
+
+        return ProcessTemplate(template, routeValues);
+    }
+
+    private static void ValidateRouteParameters(Dictionary<string, object?> routeValues)
+    {
+        foreach (var kvp in routeValues)
+        {
+            if (kvp.Value is string stringValue)
             {
-                if (kvp.Value is string stringValue)
+                var validation = UrlValidator.ValidateRouteParameter(stringValue, kvp.Key);
+                if (!validation.IsValid)
                 {
-                    var validation = UrlValidator.ValidateRouteParameter(stringValue, kvp.Key);
-                    if (!validation.IsValid)
-                    {
-                        throw new ArgumentException($"Invalid route parameter '{kvp.Key}': {string.Join(", ", validation.Errors)}");
-                    }
+                    throw new ArgumentException($"Invalid route parameter '{kvp.Key}': {string.Join(", ", validation.Errors)}");
                 }
             }
         }
+    }
 
+    private static string ProcessTemplate(string template, Dictionary<string, object?> routeValues)
+    {
         var result = template;
         
         foreach (var kvp in routeValues)
         {
-            var placeholder = $"{{{kvp.Key}}}";
-            var optionalPlaceholder = $"{{{kvp.Key}?}}";
-            
-            if (kvp.Value != null)
-            {
-                var encodedValue = kvp.Value is string stringValue 
-                    ? EncodeRouteParameter(stringValue)
-                    : kvp.Value.ToString();
-                
-                result = result.Replace(placeholder, encodedValue, StringComparison.OrdinalIgnoreCase);
-                result = result.Replace(optionalPlaceholder, encodedValue, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                // Remove optional parameters that are null
-                result = result.Replace($"/{optionalPlaceholder}", string.Empty, StringComparison.OrdinalIgnoreCase);
-                result = result.Replace(optionalPlaceholder, string.Empty, StringComparison.OrdinalIgnoreCase);
-            }
+            result = ReplaceRouteParameter(result, kvp.Key, kvp.Value);
         }
 
         return result;
+    }
+
+    private static string ReplaceRouteParameter(string template, string parameterName, object? parameterValue)
+    {
+        var placeholder = $"{{{parameterName}}}";
+        var optionalPlaceholder = $"{{{parameterName}?}}";
+        
+        if (parameterValue != null)
+        {
+            var encodedValue = parameterValue is string stringValue 
+                ? EncodeRouteParameter(stringValue)
+                : parameterValue.ToString();
+            
+            template = template.Replace(placeholder, encodedValue, StringComparison.OrdinalIgnoreCase);
+            template = template.Replace(optionalPlaceholder, encodedValue, StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            // Remove optional parameters that are null
+            template = template.Replace($"/{optionalPlaceholder}", string.Empty, StringComparison.OrdinalIgnoreCase);
+            template = template.Replace(optionalPlaceholder, string.Empty, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return template;
     }
 }

@@ -60,6 +60,8 @@ builder.Services.AddModernRouterWithAuthorization(options =>
 - ✅ Route table service for centralized route management
 - ✅ Comprehensive URL validation and sanitization
 - ✅ Protection against XSS, SQL injection, and path traversal attacks
+- ✅ Named route support for URL generation
+- ✅ Type-safe navigation with route names
 - ✅ Service registration required for proper functionality
 
 ## Security Features
@@ -69,6 +71,62 @@ builder.Services.AddModernRouterWithAuthorization(options =>
 - **SQL Injection Protection**: Pattern detection for SQL injection attempts
 - **Path Traversal Protection**: Prevents directory traversal attacks
 - **Malformed URL Protection**: Rejects invalid or suspicious URL formats
+
+## Named Route Usage
+
+### 1. Define Named Routes
+```csharp
+[Route("/users/{id:int}")]
+[RouteName("UserProfile")]
+public partial class UserProfile : ComponentBase
+{
+    [Parameter] public int Id { get; set; }
+}
+
+[Route("/users/{id:int}/posts/{slug}")]
+[RouteName("UserPost")]
+public partial class UserPost : ComponentBase
+{
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string Slug { get; set; }
+}
+```
+
+### 2. Navigate Using Route Names
+```csharp
+@inject NavigationManager Nav
+@inject IRouteNameService RouteNames
+
+// Navigate with anonymous object
+Nav.NavigateToNamedRoute(RouteNames, "UserProfile", new { id = 123 });
+
+// Navigate with dictionary
+Nav.NavigateToNamedRoute(RouteNames, "UserPost", new Dictionary<string, object?> 
+{
+    ["id"] = 123,
+    ["slug"] = "my-blog-post"
+});
+
+// Generate URL without navigating
+string url = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { id = 123 });
+// Result: "/users/123"
+```
+
+### 3. Safe Navigation with Validation
+```csharp
+// Try navigation (returns false if route doesn't exist)
+bool success = Nav.TryNavigateToNamedRoute(RouteNames, "UserProfile", new { id = 123 });
+
+// Generate URL with validation
+try 
+{
+    string url = RouteNames.GenerateUrl("UserProfile", new { id = 123 });
+}
+catch (ArgumentException ex)
+{
+    // Handle invalid route name or parameters
+}
+```
 
 ## Development Notes
 - Target Framework: .NET 9.0

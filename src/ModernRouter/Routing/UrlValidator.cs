@@ -7,9 +7,6 @@ namespace ModernRouter.Routing;
 /// </summary>
 public static class UrlValidator
 {
-    private static readonly Regex ValidPathPattern = new(
-        @"^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly Regex MaliciousPatterns = new(
         @"(\.\./|\.\.\\|javascript:|data:|vbscript:|file:|ftp:|mailto:|tel:|callto:)",
@@ -25,6 +22,8 @@ public static class UrlValidator
 
     private static readonly char[] DangerousChars = { '<', '>', '"', '\'', '&', '\0', '\r', '\n', '\t' };
     private static readonly char[] InvalidPathChars = { '|', '*', '?', '"', '<', '>', '\0' };
+    
+    private const string UnknownParameter = "unknown";
 
     /// <summary>
     /// Validates if a URL path is safe and well-formed
@@ -108,28 +107,30 @@ public static class UrlValidator
 
         var result = new UrlValidationResult();
 
+        var paramName = parameterName ?? UnknownParameter;
+        
         // Check for dangerous characters
         if (parameterValue.IndexOfAny(DangerousChars) >= 0)
         {
-            result.AddError($"Parameter '{parameterName ?? "unknown"}' contains dangerous characters");
+            result.AddError($"Parameter '{paramName}' contains dangerous characters");
         }
 
         // Check parameter length
         if (parameterValue.Length > 512)
         {
-            result.AddError($"Parameter '{parameterName ?? "unknown"}' exceeds maximum length (512 characters)");
+            result.AddError($"Parameter '{paramName}' exceeds maximum length (512 characters)");
         }
 
         // Check for XSS attempts
         if (XssPatterns.IsMatch(parameterValue))
         {
-            result.AddError($"Parameter '{parameterName ?? "unknown"}' contains potential XSS patterns");
+            result.AddError($"Parameter '{paramName}' contains potential XSS patterns");
         }
 
         // Check for SQL injection attempts
         if (SqlInjectionPatterns.IsMatch(parameterValue))
         {
-            result.AddWarning($"Parameter '{parameterName ?? "unknown"}' contains potential SQL injection patterns");
+            result.AddWarning($"Parameter '{paramName}' contains potential SQL injection patterns");
         }
 
         return result;
@@ -269,7 +270,9 @@ public static class UrlValidator
     {
         // Check if more than 50% of the string is URL encoded
         var encodedCount = 0;
-        for (int i = 0; i < input.Length - 2; i++)
+        var i = 0;
+        
+        while (i < input.Length - 2)
         {
             if (input[i] == '%' && 
                 i + 2 < input.Length && 
@@ -277,7 +280,11 @@ public static class UrlValidator
                 Uri.IsHexDigit(input[i + 2]))
             {
                 encodedCount += 3;
-                i += 2; // Skip the hex digits
+                i += 3; // Skip the percent sign and hex digits
+            }
+            else
+            {
+                i++;
             }
         }
         
@@ -289,7 +296,7 @@ public static class UrlValidator
         try
         {
             // Try to create a URI to validate format
-            var uri = new Uri(path, UriKind.RelativeOrAbsolute);
+            _ = new Uri(path, UriKind.RelativeOrAbsolute);
             return true;
         }
         catch

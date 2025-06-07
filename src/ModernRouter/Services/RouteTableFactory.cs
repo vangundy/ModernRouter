@@ -33,6 +33,8 @@ internal static class RouteTableFactory
                     var segments = ParseTemplate(attr.Template);
                     list.Add(new RouteEntry(segments, type)
                     {
+                        // Store the template string for URL generation
+                        TemplateString = attr.Template,
                         // Store all attributes from the component
                         Attributes = type.GetCustomAttributes().ToArray()
                     });

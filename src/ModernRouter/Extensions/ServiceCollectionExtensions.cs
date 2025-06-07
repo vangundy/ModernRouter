@@ -20,10 +20,11 @@ public static class ServiceCollectionExtensions
         // Register core services needed by ModernRouter
         services.AddScoped<INavMiddleware, ErrorHandlingMiddleware>();
         services.AddSingleton<IRouteTableService, RouteTableService>();
-        
+        services.AddSingleton<IRouteNameService, RouteNameService>();
+
         return services;
     }
-    
+
     /// <summary>
     /// Adds ModernRouter services with authorization support to the specified <see cref="IServiceCollection" />.
     /// </summary>
@@ -31,20 +32,20 @@ public static class ServiceCollectionExtensions
     /// <param name="configureAuthorization">A callback to configure authorization options.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
     public static IServiceCollection AddModernRouterWithAuthorization(
-        this IServiceCollection services, 
+        this IServiceCollection services,
         Action<AuthorizationOptions>? configureAuthorization = null)
     {
         // Register base services
         services.AddModernRouter();
-        
+
         // Register authorization middleware
         services.AddScoped<INavMiddleware, AuthorizationMiddleware>();
-        
+
         // Configure authorization options
         var options = new AuthorizationOptions();
         configureAuthorization?.Invoke(options);
         services.AddSingleton(options);
-        
+
         return services;
     }
 }
@@ -58,12 +59,12 @@ public class AuthorizationOptions
     /// Gets or sets the path to redirect to when authentication is required.
     /// </summary>
     public string LoginPath { get; set; } = "/login";
-    
+
     /// <summary>
     /// Gets or sets the path to redirect to when authorization fails.
     /// </summary>
     public string ForbiddenPath { get; set; } = "/forbidden";
-    
+
     /// <summary>
     /// Gets or sets whether to include the return URL when redirecting to the login page.
     /// </summary>
@@ -75,7 +76,7 @@ public class AuthorizationOptions
 /// </summary>
 internal class ErrorHandlingMiddleware : INavMiddleware
 {
-    public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next)
+    public async Task<NavResult> InvokeAsync(NavContext context, Func<Task<NavResult>> next)
     {
         try
         {

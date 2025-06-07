@@ -10,6 +10,7 @@ public partial class Router
     [Inject] private IServiceProvider Services { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IRouteTableService RouteTableService { get; set; } = default!;
+    [Inject] private IRouteNameService RouteNameService { get; set; } = default!;
     [Parameter] public Assembly AppAssembly { get; set; } = Assembly.GetEntryAssembly()!;
     [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
     [Parameter] public RenderFragment? NotFound { get; set; }
@@ -27,6 +28,9 @@ public partial class Router
         
         // Initialize the route table service
         RouteTableService.Initialize(assemblies);
+        
+        // Register named routes
+        RegisterNamedRoutes();
 
         _pipeline = [.. Services.GetServices<INavMiddleware>()];
 
@@ -71,6 +75,18 @@ public partial class Router
             return Task.FromResult(NavResult.Allow());
 
         return _pipeline[index].InvokeAsync(navContext, () => InvokePipelineAsync(navContext, index + 1));
+    }
+
+    private void RegisterNamedRoutes()
+    {
+        // Clear any existing named routes
+        RouteNameService.Clear();
+        
+        // Register routes that have names
+        foreach (var route in _routeTable.Where(r => !string.IsNullOrEmpty(r.Name)))
+        {
+            RouteNameService.RegisterRoute(route.Name!, route);
+        }
     }
 
 }

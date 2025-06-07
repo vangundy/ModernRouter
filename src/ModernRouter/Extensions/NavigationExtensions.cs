@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using ModernRouter.Routing;
+using ModernRouter.Services;
 
 namespace ModernRouter.Extensions;
 
@@ -225,5 +226,102 @@ public static class NavigationExtensions
     public static void ClearQueryParameters(this NavigationManager navigationManager, bool forceLoad = false, bool replace = false)
     {
         navigationManager.NavigateWithQuery(new QueryParameters(), forceLoad, replace);
+    }
+
+    // Named Route Navigation Methods
+
+    /// <summary>
+    /// Navigates to a named route with parameters
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeNameService">Route name service for URL generation</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="routeValues">Route parameter values (anonymous object or dictionary)</param>
+    /// <param name="forceLoad">Whether to force load the page</param>
+    /// <param name="replace">Whether to replace the current entry in history</param>
+    /// <exception cref="ArgumentException">Thrown when route name is not found or parameters are invalid</exception>
+    public static void NavigateToNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService, 
+        string routeName, object? routeValues = null, bool forceLoad = false, bool replace = false)
+    {
+        var url = routeNameService.GenerateUrl(routeName, routeValues, validateParameters: true);
+        navigationManager.NavigateTo(url, forceLoad, replace);
+    }
+
+    /// <summary>
+    /// Navigates to a named route with parameters and query parameters
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeNameService">Route name service for URL generation</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="queryParameters">Query parameters to append</param>
+    /// <param name="forceLoad">Whether to force load the page</param>
+    /// <param name="replace">Whether to replace the current entry in history</param>
+    /// <exception cref="ArgumentException">Thrown when route name is not found or parameters are invalid</exception>
+    public static void NavigateToNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
+        string routeName, object? routeValues, QueryParameters queryParameters, bool forceLoad = false, bool replace = false)
+    {
+        var url = routeNameService.GenerateUrl(routeName, routeValues, validateParameters: true);
+        navigationManager.NavigateTo(url, queryParameters, forceLoad, replace);
+    }
+
+    /// <summary>
+    /// Tries to navigate to a named route with parameters
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeNameService">Route name service for URL generation</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="forceLoad">Whether to force load the page</param>
+    /// <param name="replace">Whether to replace the current entry in history</param>
+    /// <returns>True if navigation was successful</returns>
+    public static bool TryNavigateToNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
+        string routeName, object? routeValues = null, bool forceLoad = false, bool replace = false)
+    {
+        if (routeNameService.TryGenerateUrl(routeName, routeValues, out var url))
+        {
+            try
+            {
+                navigationManager.NavigateTo(url, forceLoad, replace);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Generates a URL for a named route without navigating
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeNameService">Route name service for URL generation</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="validateParameters">Whether to validate parameters for security</param>
+    /// <returns>Generated URL</returns>
+    /// <exception cref="ArgumentException">Thrown when route name is not found or parameters are invalid</exception>
+    public static string GetUrlForNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
+        string routeName, object? routeValues = null, bool validateParameters = true)
+    {
+        return routeNameService.GenerateUrl(routeName, routeValues, validateParameters);
+    }
+
+    /// <summary>
+    /// Tries to generate a URL for a named route without navigating
+    /// </summary>
+    /// <param name="navigationManager">Navigation manager instance</param>
+    /// <param name="routeNameService">Route name service for URL generation</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="url">Generated URL if successful</param>
+    /// <param name="validateParameters">Whether to validate parameters for security</param>
+    /// <returns>True if URL generation was successful</returns>
+    public static bool TryGetUrlForNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
+        string routeName, object? routeValues, out string url, bool validateParameters = true)
+    {
+        return routeNameService.TryGenerateUrl(routeName, routeValues, out url, validateParameters);
     }
 }
