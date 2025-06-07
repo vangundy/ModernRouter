@@ -35,6 +35,20 @@ ModernRouter provides an advanced, hierarchical routing system designed to handl
 - **Optional Parameters**: Define parameters that don't need to be included in the URL
 - **Catch-All Parameters**: Capture multiple URL segments with a single parameter
 - **Strong Typing**: Route parameters are automatically converted to their specified types
+- **Query Parameter Support**: Full parsing utilities for URL query strings
+
+### Named Route System
+- **Type-Safe Navigation**: Navigate using route names instead of hardcoded URLs
+- **URL Generation**: Generate URLs programmatically from route names and parameters
+- **Route Registration**: Automatic registration of named routes from component attributes
+- **Parameter Validation**: Validate parameters during URL generation
+
+### Security & Validation
+- **URL Validation**: Comprehensive validation against malicious patterns
+- **XSS Protection**: Detection and prevention of cross-site scripting attempts
+- **SQL Injection Protection**: Pattern detection for SQL injection attempts
+- **Path Traversal Protection**: Prevents directory traversal attacks
+- **Parameter Sanitization**: Automatic cleaning of dangerous characters
 
 ### Hierarchical Routing with Outlets
 - **Nested Routes**: Support for parent-child relationships between routes
@@ -48,6 +62,11 @@ ModernRouter provides an advanced, hierarchical routing system designed to handl
 - **Case-Insensitive Matching**: Route segments match regardless of case
 - **Flexible Template Structure**: Support for complex route patterns
 
+### Navigation Experience
+- **Progress Indicators**: Built-in navigation progress indication
+- **Loading States**: Configurable loading UI during route transitions
+- **Error Boundaries**: Comprehensive error handling with recovery options
+
 ### Navigation Middleware Guards
 - Intercept and control navigation requests using middleware
 - Implement authentication, analytics, unsaved changes prompts, and more
@@ -60,6 +79,12 @@ ModernRouter provides an advanced, hierarchical routing system designed to handl
 - Loader result is cascaded to the component and all its descendants via [CascadingParameter]
 - Enables efficient data fetching and delivery for each route and nested outlet
 
+### Enhanced Breadcrumbs
+- **Intelligent Matching**: Smart breadcrumb generation based on route structure
+- **Customizable Templates**: Flexible item and separator templates
+- **Parameter-Aware**: Automatic handling of route parameters in breadcrumb labels
+- **Accessibility**: Built-in ARIA attributes and semantic markup
+
 ## Installation
 
 To install ModernRouter, add the library to your Blazor WebAssembly project using NuGet:
@@ -71,8 +96,9 @@ To install ModernRouter, add the library to your Blazor WebAssembly project usin
 1. Add the ModernRouter library to your Blazor WebAssembly project.
 2. Register ModernRouter services in your `Program.cs`:
 ```csharp
-// basic setup
+// Basic setup
 builder.Services.AddModernRouter();
+
 // Or with authorization support 
 builder.Services.AddModernRouterWithAuthorization(options => 
 { 
@@ -91,7 +117,12 @@ builder.Services.AddModernRouterWithAuthorization(options =>
             <h2>An error occurred</h2> 
             <p>@exception.Message</p> 
         </div> 
-    </ErrorContent> 
+    </ErrorContent>
+    <NavigationProgress>
+        <div class="loading-spinner">
+            <p>Loading...</p>
+        </div>
+    </NavigationProgress>
 </ModernRouter.Components.Router>
 ```
 4. Define routes using page directives on your components.
@@ -113,6 +144,28 @@ builder.Services.AddModernRouterWithAuthorization(options =>
 }
 ```
 
+### Named Routes
+
+```razor
+@page "/users/{id:int}"
+@attribute [RouteName("UserProfile")]
+<h1>User Profile: @Id</h1>
+@code { 
+    [Parameter] public int Id { get; set; } 
+}
+```
+
+```csharp
+@inject NavigationManager Nav
+@inject IRouteNameService RouteNames
+
+// Navigate using route names
+Nav.NavigateToNamedRoute(RouteNames, "UserProfile", new { id = 123 });
+
+// Generate URLs
+string url = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { id = 123 });
+```
+
 ### Using Nested Routes
 
 ```razor
@@ -123,7 +176,21 @@ builder.Services.AddModernRouterWithAuthorization(options =>
     <NavLink href="/admin/settings">Settings</NavLink> 
 </nav>
 <Outlet />
+```
 
+### Enhanced Breadcrumbs
+
+```razor
+@page "/products/{category}/{id:int}"
+@using ModernRouter.Components
+
+<EnhancedBreadcrumbs />
+<h1>Product Details</h1>
+
+@code {
+    [Parameter] public string Category { get; set; } = string.Empty;
+    [Parameter] public int Id { get; set; }
+}
 ```
 
 ### Master-Detail Views
@@ -150,13 +217,17 @@ Fetch data asynchronously for each route and nested outlet.
 
 ModernRouter uses a component-based architecture with these key parts:
 
-1. **Router**: The main router component that initiates the routing process.
+1. **Router**: The main router component that initiates the routing process and manages navigation.
 2. **RouteTableFactory**: Builds a routing table by analyzing component route attributes.
-3. **RouteMatcher**: Matches URL paths against route templates.
+3. **RouteMatcher**: Matches URL paths against route templates with security validation.
 4. **Outlet**: Renders matched components at specific locations in the component hierarchy.
-5. **RouteContext**: Encapsulates routing state and parameters.
-6. **INavMiddleware**: Interface for navigation middleware guards.
-7. **IRouteDataLoader**: Interface for async data loaders.
+5. **RouteView**: Renders individual route components with loading and error handling.
+6. **RouteContext**: Encapsulates routing state and parameters.
+7. **INavMiddleware**: Interface for navigation middleware guards.
+8. **IRouteDataLoader**: Interface for async data loaders.
+9. **IRouteTableService**: Centralized route management and breadcrumb generation.
+10. **IRouteNameService**: Named route registration and URL generation.
+11. **EnhancedBreadcrumbs**: Intelligent breadcrumb component with customizable templates.
 
 ## Middleware Guards
 
@@ -541,26 +612,30 @@ ModernRouter is licensed under the [MIT License](LICENSE.md).
 
 For support, please open an issue on the [GitHub repository](https://github.com/vangundy/ModernRouter/issues).
 
-##TODO
+## Roadmap
 
-- [ ] Add more examples and documentation for advanced scenarios
-- [ ] Implement breadcrumb component that renders based on router state 
-- [ ] Add support for global progress indicators during navigation.  Approach: Pass a <LoadingContent> fragment to the Router component that will be displayed during navigation. It flows to all nested outlets.
+### Completed Features ✅
+- [x] Enhanced breadcrumb component with intelligent route matching
+- [x] Global progress indicators during navigation
+- [x] Query string parameter support in routes
+- [x] Named route system with type-safe navigation
+- [x] Comprehensive URL validation and security features
+- [x] Route table service for centralized route management
+
+### Planned Features 🚧
 - [ ] Add support for lazy loading of route components
 - [ ] Implement route prefetching for improved performance
 - [ ] Add support for scroll restoration on navigation
 - [ ] Implement route transition animations
-- [ ] Add support for query string parameters in routes
-- [ ] Implement route guards for specific conditions
-- [ ] Add support for source generation of route tables to improve performance. Approach: Use source generators to analyze route attributes and generate a strongly-typed route table (route manifest) at compile time using Roslyn Source Generator.
-- [ ] Concurrent prefetching of data loaders. Approach: Schedule LoadAsync for all data loaders in parallel, then wait for all to complete before rendering the component. Requires a manifest walk.
+- [ ] Add support for source generation of route tables to improve performance
+- [ ] Concurrent prefetching of data loaders
 - [ ] Add support for route aliases
-- [ ] Implement caching for loaders to enhance performance and reduce redundant data fetching.
-- [ ] Build-time type safety for loaders. Approach: Use source generators to validate loader signatures at compile time.
-- [ ] Per navigation DI scope for loaders and middleware. Approach: Create a scoped service provider for each navigation that can be injected into loaders and middleware.
-- [ ] Support Blazor server-side scenarios. 
-- [ ] Link prefetch eliminates first-click delay by prefetching route data when hovering over links.
-- [ ] Optimistic UI skeleton loading for data-heavy routes.
-- [ ] Nav error toast notifications for better user feedback.
-- [ ] Route aware devtools for debugging and inspection.
-- [ ] Prefetch header hints for improved performance leveraging HTTP/2 multiplexing.
+- [ ] Implement caching for loaders to enhance performance and reduce redundant data fetching
+- [ ] Build-time type safety for loaders using source generators
+- [ ] Per navigation DI scope for loaders and middleware
+- [ ] Support Blazor server-side scenarios
+- [ ] Link prefetch to eliminate first-click delay
+- [ ] Optimistic UI skeleton loading for data-heavy routes
+- [ ] Navigation error toast notifications for better user feedback
+- [ ] Route-aware devtools for debugging and inspection
+- [ ] Prefetch header hints for improved performance leveraging HTTP/2 multiplexing
