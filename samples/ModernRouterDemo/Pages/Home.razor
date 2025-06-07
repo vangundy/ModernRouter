@@ -1,21 +1,105 @@
 ﻿@page "/home"
+@page "/"
 @using Microsoft.AspNetCore.Components.Routing
+@using ModernRouter.Components
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - ModernRouter Demo</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container">
+    <!-- Enhanced Breadcrumb Component -->
+    <EnhancedBreadcrumbs Options="@breadcrumbOptions" 
+                         OnBreadcrumbClick="@HandleBreadcrumbClick" />
 
-Welcome to your new app.
+    <div class="hero-section">
+    <h1>🚀 ModernRouter Demo</h1>
+    <p class="lead">Welcome to the ModernRouter demonstration app!</p>
+    <p>This demo showcases the enhanced breadcrumb component with rich metadata, accessibility features, and customization options.</p>
+</div>
 
-<a @onclick="@(() => NavigationManager.NavigateTo("orders"))" class="btn btn-primary">
-    Go to Orders
-</a>
-<a @onclick="@(() => NavigationManager.NavigateTo("orders/1"))" class="btn btn-primary">
-    Go to Order 1
-</a>
-<a @onclick="@(() => NavigationManager.NavigateTo("orders/1/details/1"))" class="btn btn-primary">
-    Go to Order Details
-</a>
-<a @onclick="@(() => NavigationManager.NavigateTo("orders/1/details/1/some-slug"))" class="btn btn-primary">
-    Go to Order Details with Slug
-</a>
+<div class="demo-section">
+    <h2>🧭 Navigation Examples</h2>
+    <p>Click these links to see the enhanced breadcrumbs in action:</p>
+    
+    <div class="nav-grid">
+        <div class="nav-card">
+            <h3>📋 Orders</h3>
+            <p>View all orders with breadcrumb navigation</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("orders"))" class="btn btn-primary">
+                🔗 All Orders
+            </button>
+        </div>
+        
+        <div class="nav-card">
+            <h3>📄 Specific Order</h3>
+            <p>View a specific order with dynamic breadcrumbs</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("orders/1"))" class="btn btn-primary">
+                🔗 Order #1
+            </button>
+        </div>
+        
+        <div class="nav-card">
+            <h3>📝 Order Details</h3>
+            <p>Deep navigation with rich breadcrumb metadata</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("orders/1/details/1"))" class="btn btn-primary">
+                🔗 Order Details
+            </button>
+        </div>
+        
+        <div class="nav-card">
+            <h3>🏷️ With Slug</h3>
+            <p>Complex route with multiple parameters</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("orders/1/details/1/some-product"))" class="btn btn-primary">
+                🔗 Product Details
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="features-section">
+    <h2>✨ Breadcrumb Features</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <h3>🛡️ Security First</h3>
+            <p>Built-in validation against XSS, SQL injection, and path traversal attacks</p>
+        </div>
+        <div class="feature-card">
+            <h3>♿ Accessibility</h3>
+            <p>WCAG compliant with ARIA attributes, keyboard navigation, and screen reader support</p>
+        </div>
+        <div class="feature-card">
+            <h3>🎨 Customizable</h3>
+            <p>Rich templating options, CSS custom properties, and responsive design</p>
+        </div>
+        <div class="feature-card">
+            <h3>⚡ Performance</h3>
+            <p>Smart change detection, auto-collapse, and optimized rendering</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private BreadcrumbOptions breadcrumbOptions = new()
+    {
+        HomeLabel = "🏠 Demo Home",
+        HomeUrl = "/",
+        Separator = "→",
+        MaxItems = 5,
+        AutoCollapse = true,
+        ShowIcons = true,
+        ShowDescriptions = true,
+        Animation = BreadcrumbAnimation.Fade,
+        ContainerCssClass = "demo-breadcrumbs"
+    };
+    
+    private Task HandleBreadcrumbClick(BreadcrumbEventArgs args)
+    {
+        // Example of custom breadcrumb click handling
+        if (args.Item.Label.Contains("Demo Home"))
+        {
+            Console.WriteLine($"🏠 Navigating to home: {args.Item.Url}");
+        }
+        // Don't cancel navigation - let it proceed normally
+        return Task.CompletedTask;
+    }
+}
+</div>

@@ -18,7 +18,7 @@ public partial class Router
 
     private List<RouteEntry> _routeTable = [];
     private RouteContext? _current; // Used in Router.razor template for rendering matched route
-    private IReadOnlyList<INavMiddleware> _pipeline = Array.Empty<INavMiddleware>();
+    private INavMiddleware[] _pipeline = [];
 
     async protected override Task OnInitializedAsync()
     {
@@ -32,7 +32,7 @@ public partial class Router
         // Register named routes
         RegisterNamedRoutes();
 
-        _pipeline = [.. Services.GetServices<INavMiddleware>()];
+        _pipeline = Services.GetServices<INavMiddleware>().ToArray();
 
         await NavigateAsync(Nav.Uri, firstLoad: true);
         Nav.LocationChanged += async (_, e) =>
@@ -71,7 +71,7 @@ public partial class Router
 
     private Task<NavResult> InvokePipelineAsync(NavContext navContext, int index)
     {
-        if (index == _pipeline.Count)
+        if (index == _pipeline.Length)
             return Task.FromResult(NavResult.Allow());
 
         return _pipeline[index].InvokeAsync(navContext, () => InvokePipelineAsync(navContext, index + 1));

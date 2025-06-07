@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
-using ModernRouter.Routing;
 using ModernRouter.Services;
 
 namespace ModernRouter.Components;
@@ -112,10 +111,3 @@ public partial class Breadcrumbs : IDisposable
     }
 }
 
-public class BreadcrumbItem
-{
-    public string Label { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
-    public string? OriginalSegment { get; set; }
-}

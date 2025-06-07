@@ -1,11 +1,58 @@
-﻿
+﻿@using Microsoft.AspNetCore.Components.Routing
+@using ModernRouter.Components
 
-<PageTitle>Order Details</PageTitle>
+<PageTitle>Order Details - ModernRouter Demo</PageTitle>
 
-<p>Order details for ID: @LineId will be displayed here.</p>
-@if (!string.IsNullOrEmpty(Slug))
-{
-    <p>Slug: @Slug</p>
+<div class="container">
+    <!-- Enhanced Breadcrumb Component -->
+    <EnhancedBreadcrumbs Options="@breadcrumbOptions" />
+
+    <div class="page-header">
+        <h1>📝 Order Details</h1>
+        <p class="page-description">Line item @LineId details @(!string.IsNullOrEmpty(Slug) ? $"for {Slug}" : "")</p>
+    </div>
+
+    <div class="details-section">
+        <h3>📊 Line Item Information</h3>
+        <div class="info-card">
+            <p><strong>Line Item ID:</strong> @LineId</p>
+            @if (!string.IsNullOrEmpty(Slug))
+            {
+                <p><strong>Product:</strong> @Slug</p>
+                <p><strong>Quantity:</strong> 2</p>
+                <p><strong>Unit Price:</strong> $149.99</p>
+                <p><strong>Subtotal:</strong> $299.98</p>
+            }
+            else
+            {
+                <p><strong>Type:</strong> Generic Line Item</p>
+                <p><strong>Status:</strong> Active</p>
+            }
+        </div>
+    </div>
+
+    <div class="action-section">
+        <h3>🔗 Navigation Actions</h3>
+        <div class="action-grid">
+            <button class="btn btn-secondary" onclick="history.back()">
+                📋 Back to Order
+            </button>
+            <button class="btn btn-secondary" onclick="location.href='/'">
+                🏠 Back to Home
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private BreadcrumbOptions breadcrumbOptions = new()
+    {
+        HomeLabel = "🏠 Demo Home",
+        HomeUrl = "/",
+        Separator = "→",
+        ShowIcons = true,
+        ShowDescriptions = true,
+        Animation = BreadcrumbAnimation.Slide,
+        ContainerCssClass = "page-breadcrumbs"
+    };
 }
-
-

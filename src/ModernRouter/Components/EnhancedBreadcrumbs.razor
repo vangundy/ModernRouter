@@ -1,0 +1,51 @@
+@using ModernRouter.Services
+@using Microsoft.AspNetCore.Components.Routing
+
+<nav aria-label="breadcrumb" 
+     class="modern-breadcrumbs @Options.ContainerCssClass @CssClass"
+     data-animation="@Options.Animation.ToString().ToLower()">
+    
+    <ol class="breadcrumb-list" role="list">
+        @foreach (var (item, index) in _breadcrumbs.Select((item, index) => (item, index)))
+        {
+            <li class="breadcrumb-item @GetItemCssClass(item) @Options.ItemCssClass" 
+                role="listitem"
+                aria-current="@(item.IsActive ? "page" : null)"
+                data-breadcrumb-index="@index">
+                
+                @if (ItemTemplate != null)
+                {
+                    @ItemTemplate(item)
+                }
+                else
+                {
+                    <BreadcrumbItemRenderer Item="@item" 
+                                         Options="@Options" 
+                                         OnItemClick="@OnItemClick" />
+                }
+            </li>
+            
+            @if (!item.IsActive && index < _breadcrumbs.Count - 1)
+            {
+                <li class="breadcrumb-separator" aria-hidden="true">
+                    @if (SeparatorTemplate != null)
+                    {
+                        @SeparatorTemplate
+                    }
+                    else
+                    {
+                        @((MarkupString)Options.Separator)
+                    }
+                </li>
+            }
+        }
+    </ol>
+    
+    @if (ShowToolbar && ToolbarTemplate != null)
+    {
+        <div class="breadcrumb-toolbar">
+            @ToolbarTemplate
+        </div>
+    }
+</nav>
+

@@ -1,0 +1,73 @@
+@if (Item.IsActive)
+{
+    <span class="breadcrumb-active" 
+          title="@Item.Description"
+          aria-label="@GetAriaLabel()">
+        @if (Options.ShowIcons && !string.IsNullOrEmpty(Item.Icon))
+        {
+            <i class="breadcrumb-icon @Item.Icon" aria-hidden="true"></i>
+        }
+        <span class="breadcrumb-label">@Item.Label</span>
+    </span>
+}
+else if (Item.IsClickable && Item.Url != "#")
+{
+    <a href="@Item.Url" 
+       class="breadcrumb-link"
+       title="@Item.Description"
+       aria-label="@GetAriaLabel()"
+       @onclick="@(() => OnItemClick.InvokeAsync(Item))"
+       @onclick:preventDefault="true">
+        @if (Options.ShowIcons && !string.IsNullOrEmpty(Item.Icon))
+        {
+            <i class="breadcrumb-icon @Item.Icon" aria-hidden="true"></i>
+        }
+        <span class="breadcrumb-label">@Item.Label</span>
+    </a>
+}
+else
+{
+    <span class="breadcrumb-static" 
+          title="@Item.Description"
+          aria-label="@GetAriaLabel()">
+        @if (Options.ShowIcons && !string.IsNullOrEmpty(Item.Icon))
+        {
+            <i class="breadcrumb-icon @Item.Icon" aria-hidden="true"></i>
+        }
+        <span class="breadcrumb-label">@Item.Label</span>
+    </span>
+}
+
+@code {
+    /// <summary>
+    /// The breadcrumb item to render
+    /// </summary>
+    [Parameter, EditorRequired] public BreadcrumbItem Item { get; set; } = default!;
+
+    /// <summary>
+    /// Breadcrumb options
+    /// </summary>
+    [Parameter, EditorRequired] public BreadcrumbOptions Options { get; set; } = default!;
+
+    /// <summary>
+    /// Event callback for item clicks
+    /// </summary>
+    [Parameter] public EventCallback<BreadcrumbItem> OnItemClick { get; set; }
+
+    private string GetAriaLabel()
+    {
+        var label = Item.Label;
+        
+        if (!string.IsNullOrEmpty(Item.Description) && Options.ShowDescriptions)
+        {
+            label += $": {Item.Description}";
+        }
+        
+        if (Item.IsActive)
+        {
+            label += " (current page)";
+        }
+        
+        return label;
+    }
+}

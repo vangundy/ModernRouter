@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<INavMiddleware, ErrorHandlingMiddleware>();
         services.AddSingleton<IRouteTableService, RouteTableService>();
         services.AddSingleton<IRouteNameService, RouteNameService>();
+        services.AddSingleton<IBreadcrumbService, BreadcrumbService>();
 
         return services;
     }
