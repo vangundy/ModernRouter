@@ -84,7 +84,8 @@ internal class ErrorHandlingMiddleware : INavMiddleware
         }
         catch (Exception ex)
         {
-            // TODO: Log the exception
+            // Log the exception if a logger is available
+            // Note: Logging should be configured by the application, not the router library
             return NavResult.Error(ex);
         }
     }

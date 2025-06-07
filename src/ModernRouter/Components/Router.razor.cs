@@ -17,7 +17,7 @@ public partial class Router
     [Parameter] public RenderFragment<Exception>? ErrorContent { get; set; }
 
     private List<RouteEntry> _routeTable = [];
-    private RouteContext? _current;
+    private RouteContext? _current; // Used in Router.razor template for rendering matched route
     private IReadOnlyList<INavMiddleware> _pipeline = Array.Empty<INavMiddleware>();
 
     async protected override Task OnInitializedAsync()

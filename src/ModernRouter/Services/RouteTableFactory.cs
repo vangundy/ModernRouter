@@ -22,29 +22,21 @@ internal static class RouteTableFactory
 
     public static List<RouteEntry> Build(IEnumerable<Assembly> assemblies)
     {
-        var list = new List<RouteEntry>();
-
-        foreach (var asm in assemblies)
-        {
-            foreach (var type in asm.ExportedTypes)
-            {
-                foreach (RouteAttribute attr in type.GetCustomAttributes<RouteAttribute>())
+        var routes = assemblies
+            .SelectMany(asm => asm.ExportedTypes)
+            .SelectMany(type => type.GetCustomAttributes<RouteAttribute>()
+                .Select(attr => new RouteEntry(ParseTemplate(attr.Template), type)
                 {
-                    var segments = ParseTemplate(attr.Template);
-                    list.Add(new RouteEntry(segments, type)
-                    {
-                        // Store the template string for URL generation
-                        TemplateString = attr.Template,
-                        // Store all attributes from the component
-                        Attributes = type.GetCustomAttributes().ToArray()
-                    });
-                }
-            }
-        }
+                    // Store the template string for URL generation
+                    TemplateString = attr.Template,
+                    // Store all attributes from the component
+                    Attributes = [.. type.GetCustomAttributes()]
+                }))
+            .ToList();
 
         // longest template first
-        list.Sort((a, b) => b.Template.Length.CompareTo(a.Template.Length));
-        return list;
+        routes.Sort((a, b) => b.Template.Length.CompareTo(a.Template.Length));
+        return routes;
     }
 
     private static RouteSegment[] ParseTemplate(string template)
