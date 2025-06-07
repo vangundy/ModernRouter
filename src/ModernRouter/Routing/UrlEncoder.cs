@@ -130,10 +130,8 @@ public static class UrlEncoder
         if (string.IsNullOrEmpty(value))
             return true;
 
-        // Check for characters that should be encoded
-        var unsafeChars = new[] { '/', '?', '#', '[', ']', '@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=', '%', ' ' };
-        
-        return !value.Any(c => unsafeChars.Contains(c) || char.IsControl(c));
+        var validation = UrlValidator.ValidateRouteParameter(value);
+        return validation.IsValid;
     }
 
     /// <summary>
@@ -146,6 +144,62 @@ public static class UrlEncoder
         if (string.IsNullOrEmpty(value))
             return string.Empty;
 
-        return EncodeRouteParameter(value);
+        return UrlValidator.SanitizeRouteParameter(value);
+    }
+
+    /// <summary>
+    /// Validates and builds a URL path with properly encoded route parameter values
+    /// </summary>
+    /// <param name="template">Route template (e.g., "/users/{id}/posts/{slug}")</param>
+    /// <param name="routeValues">Route parameter values</param>
+    /// <param name="validateParameters">Whether to validate parameter values for security</param>
+    /// <returns>URL path with encoded parameters</returns>
+    /// <exception cref="ArgumentException">Thrown when validation fails and validateParameters is true</exception>
+    public static string BuildValidatedPath(string template, Dictionary<string, object?> routeValues, bool validateParameters = true)
+    {
+        if (string.IsNullOrEmpty(template))
+            return string.Empty;
+
+        // Validate route values if requested
+        if (validateParameters)
+        {
+            foreach (var kvp in routeValues)
+            {
+                if (kvp.Value is string stringValue)
+                {
+                    var validation = UrlValidator.ValidateRouteParameter(stringValue, kvp.Key);
+                    if (!validation.IsValid)
+                    {
+                        throw new ArgumentException($"Invalid route parameter '{kvp.Key}': {string.Join(", ", validation.Errors)}");
+                    }
+                }
+            }
+        }
+
+        var result = template;
+        
+        foreach (var kvp in routeValues)
+        {
+            var placeholder = $"{{{kvp.Key}}}";
+            var optionalPlaceholder = $"{{{kvp.Key}?}}";
+            
+            if (kvp.Value != null)
+            {
+                var encodedValue = kvp.Value is string stringValue 
+                    ? EncodeRouteParameter(stringValue)
+                    : kvp.Value.ToString();
+                
+                result = result.Replace(placeholder, encodedValue, StringComparison.OrdinalIgnoreCase);
+                result = result.Replace(optionalPlaceholder, encodedValue, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                // Remove optional parameters that are null
+                result = result.Replace($"/{optionalPlaceholder}", string.Empty, StringComparison.OrdinalIgnoreCase);
+                result = result.Replace(optionalPlaceholder, string.Empty, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        return result;
     }
 }

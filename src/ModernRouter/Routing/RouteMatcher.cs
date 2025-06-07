@@ -3,15 +3,31 @@ public static class RouteMatcher
 {
     public static RouteContext Match(IEnumerable<RouteEntry> entries, string path)
     {
+        // Validate the incoming path for security issues
+        var validationResult = UrlValidator.ValidatePath(path);
+        if (!validationResult.IsValid)
+        {
+            // For security reasons, reject malformed URLs
+            return new RouteContext 
+            { 
+                QueryParameters = new QueryParameters() 
+            };
+        }
+
         // Separate path from query string
         var questionMarkIndex = path.IndexOf('?');
         var pathPart = questionMarkIndex >= 0 ? path[..questionMarkIndex] : path;
         var queryPart = questionMarkIndex >= 0 ? path[questionMarkIndex..] : string.Empty;
         
+        // Validate query string separately
+        var queryValidation = UrlValidator.ValidateQueryString(queryPart);
+        var queryParameters = queryValidation.IsValid 
+            ? new QueryParameters(queryPart) 
+            : new QueryParameters(); // Use empty if invalid
+        
         var segments = pathPart.Split('/', StringSplitOptions.RemoveEmptyEntries)
                               .Select(UrlEncoder.DecodeRouteParameter)
                               .ToArray();
-        var queryParameters = new QueryParameters(queryPart);
 
         foreach (var entry in entries)
         {
@@ -102,6 +118,13 @@ public static class RouteMatcher
 
     private static bool HandleParameterSegment(RouteSegment seg, string part, Dictionary<string, object?> values)
     {
+        // Validate the parameter value for security
+        var validationResult = UrlValidator.ValidateRouteParameter(part, seg.ParameterName);
+        if (!validationResult.IsValid)
+        {
+            return false; // Reject invalid parameter values
+        }
+
         if (seg.Converter is null)
         {
             values[seg.ParameterName] = part;

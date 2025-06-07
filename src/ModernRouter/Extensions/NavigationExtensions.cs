@@ -26,9 +26,28 @@ public static class NavigationExtensions
     /// <param name="queryParameters">Query parameters to append</param>
     /// <param name="forceLoad">Whether to force load the page</param>
     /// <param name="replace">Whether to replace the current entry in history</param>
+    /// <exception cref="ArgumentException">Thrown when URI is invalid or unsafe</exception>
     public static void NavigateTo(this NavigationManager navigationManager, string uri, QueryParameters queryParameters, bool forceLoad = false, bool replace = false)
     {
+        // Validate the base URI
+        var uriValidation = UrlValidator.ValidatePath(uri);
+        if (!uriValidation.IsValid)
+        {
+            throw new ArgumentException($"Invalid or unsafe URI: {string.Join(", ", uriValidation.Errors)}", nameof(uri));
+        }
+
         var queryString = queryParameters.ToQueryString(includeQuestionMark: false);
+        
+        // Validate the complete query string
+        if (!string.IsNullOrEmpty(queryString))
+        {
+            var queryValidation = UrlValidator.ValidateQueryString(queryString);
+            if (!queryValidation.IsValid)
+            {
+                throw new ArgumentException($"Invalid or unsafe query parameters: {string.Join(", ", queryValidation.Errors)}", nameof(queryParameters));
+            }
+        }
+        
         var fullUri = string.IsNullOrEmpty(queryString) ? uri : $"{uri}?{queryString}";
         navigationManager.NavigateTo(fullUri, forceLoad, replace);
     }
@@ -42,10 +61,31 @@ public static class NavigationExtensions
     /// <param name="queryParameters">Query parameters to append</param>
     /// <param name="forceLoad">Whether to force load the page</param>
     /// <param name="replace">Whether to replace the current entry in history</param>
+    /// <exception cref="ArgumentException">Thrown when route template or parameters are invalid or unsafe</exception>
     public static void NavigateToRoute(this NavigationManager navigationManager, string routeTemplate, 
         Dictionary<string, object?> routeValues, QueryParameters? queryParameters = null, 
         bool forceLoad = false, bool replace = false)
     {
+        // Validate route template
+        var templateValidation = UrlValidator.ValidatePath(routeTemplate);
+        if (!templateValidation.IsValid)
+        {
+            throw new ArgumentException($"Invalid route template: {string.Join(", ", templateValidation.Errors)}", nameof(routeTemplate));
+        }
+
+        // Validate route parameter values
+        foreach (var kvp in routeValues)
+        {
+            if (kvp.Value is string stringValue)
+            {
+                var paramValidation = UrlValidator.ValidateRouteParameter(stringValue, kvp.Key);
+                if (!paramValidation.IsValid)
+                {
+                    throw new ArgumentException($"Invalid route parameter '{kvp.Key}': {string.Join(", ", paramValidation.Errors)}", nameof(routeValues));
+                }
+            }
+        }
+
         var path = UrlEncoder.BuildPath(routeTemplate, routeValues);
         
         if (queryParameters != null && queryParameters.Count > 0)
@@ -54,6 +94,13 @@ public static class NavigationExtensions
         }
         else
         {
+            // Still validate the generated path
+            var pathValidation = UrlValidator.ValidatePath(path);
+            if (!pathValidation.IsValid)
+            {
+                throw new ArgumentException($"Generated path is invalid: {string.Join(", ", pathValidation.Errors)}");
+            }
+            
             navigationManager.NavigateTo(path, forceLoad, replace);
         }
     }

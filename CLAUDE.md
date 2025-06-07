@@ -58,7 +58,17 @@ builder.Services.AddModernRouterWithAuthorization(options =>
 - ✅ Proper URL encoding/decoding for route parameters
 - ✅ Intelligent breadcrumb route matching (replaces crude string detection)
 - ✅ Route table service for centralized route management
+- ✅ Comprehensive URL validation and sanitization
+- ✅ Protection against XSS, SQL injection, and path traversal attacks
 - ✅ Service registration required for proper functionality
+
+## Security Features
+- **URL Validation**: Comprehensive validation against malicious patterns
+- **Parameter Sanitization**: Automatic cleaning of dangerous characters
+- **XSS Protection**: Detection and prevention of cross-site scripting attempts
+- **SQL Injection Protection**: Pattern detection for SQL injection attempts
+- **Path Traversal Protection**: Prevents directory traversal attacks
+- **Malformed URL Protection**: Rejects invalid or suspicious URL formats
 
 ## Development Notes
 - Target Framework: .NET 9.0
