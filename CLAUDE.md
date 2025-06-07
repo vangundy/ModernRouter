@@ -38,6 +38,28 @@ dotnet test
 dotnet pack src/ModernRouter/ModernRouter.csproj
 ```
 
+## Service Registration
+**REQUIRED**: Register ModernRouter services to use components:
+
+```csharp
+// In Program.cs or Startup.cs
+builder.Services.AddModernRouter();
+
+// Or with authorization
+builder.Services.AddModernRouterWithAuthorization(options =>
+{
+    options.LoginPath = "/login";
+    options.ForbiddenPath = "/forbidden";
+});
+```
+
+## Recent Enhancements
+- ✅ Query parameter support with full parsing utilities
+- ✅ Proper URL encoding/decoding for route parameters
+- ✅ Intelligent breadcrumb route matching (replaces crude string detection)
+- ✅ Route table service for centralized route management
+- ✅ Service registration required for proper functionality
+
 ## Development Notes
 - Target Framework: .NET 9.0
 - Uses Blazor Razor components

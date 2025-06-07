@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using ModernRouter.Extensions;
 using ModernRouter.Routing;
 using ModernRouterDemo;
 
@@ -11,5 +12,5 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 //builder.Services.AddScoped<INavMiddleware, AnalyticsTap>();
 //builder.Services.AddScoped<INavMiddleware, AuthGuard>();
 //builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
-
+builder.Services.AddModernRouter();
 await builder.Build().RunAsync();

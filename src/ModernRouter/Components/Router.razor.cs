@@ -9,6 +9,7 @@ public partial class Router
 {
     [Inject] private IServiceProvider Services { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private IRouteTableService RouteTableService { get; set; } = default!;
     [Parameter] public Assembly AppAssembly { get; set; } = Assembly.GetEntryAssembly()!;
     [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
     [Parameter] public RenderFragment? NotFound { get; set; }
@@ -23,6 +24,9 @@ public partial class Router
         var assemblies = new List<Assembly> { AppAssembly };
         if (AdditionalAssemblies is not null) assemblies.AddRange(AdditionalAssemblies);
         _routeTable = RouteTableFactory.Build(assemblies);
+        
+        // Initialize the route table service
+        RouteTableService.Initialize(assemblies);
 
         _pipeline = [.. Services.GetServices<INavMiddleware>()];
 

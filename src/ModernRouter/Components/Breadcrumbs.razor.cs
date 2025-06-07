@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using ModernRouter.Routing;
-using System.Text;
+using ModernRouter.Services;
 
 namespace ModernRouter.Components;
 
-public partial class Breadcrumbs
+public partial class Breadcrumbs : IDisposable
 {
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] private IRouteTableService RouteTableService { get; set; } = default!;
     
     [Parameter] public string Separator { get; set; } = "/";
     [Parameter] public string HomeLabel { get; set; } = "Home";
@@ -21,9 +22,7 @@ public partial class Breadcrumbs
     /// </summary>
     [Parameter] public string? CssClass { get; set; }
     
-    [CascadingParameter] private RouteContext? RouteContext { get; set; }
-    
-    private List<BreadcrumbItem> _breadcrumbs = [];
+    private readonly List<BreadcrumbItem> _breadcrumbs = [];
 
     protected override void OnInitialized()
     {
@@ -60,105 +59,56 @@ public partial class Breadcrumbs
         if (string.IsNullOrEmpty(path))
             return;
             
-        string[] segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        StringBuilder currentPath = new();
+        // Use the route table service for proper breadcrumb matching
+        var breadcrumbMatches = RouteTableService.GetBreadcrumbMatches(path);
         
-        for (int i = 0; i < segments.Length; i++)
+        foreach (var match in breadcrumbMatches)
         {
-            string segment = segments[i];
-            
-            // Skip segments that are likely route parameters (might need refinement)
-            if (segment.StartsWith('{') && segment.EndsWith('}'))
-                continue;
-                
-            // Build the current path with URL encoding
-            if (currentPath.Length > 0)
-                currentPath.Append('/');
-            currentPath.Append(UrlEncoder.EncodeRouteParameter(segment));
-            
-            string url = $"/{currentPath}";
-            string label = GetLabelForSegment(segment);
-            bool isActive = i == segments.Length - 1;
+            var label = GetLabelForMatch(match);
             
             _breadcrumbs.Add(new BreadcrumbItem
             {
                 Label = label,
-                Url = url,
-                IsActive = isActive,
-                OriginalSegment = segment
+                Url = match.Path,
+                IsActive = match.IsActive,
+                OriginalSegment = match.Path.Split('/').LastOrDefault() ?? string.Empty
             });
         }
-        
-        // If we have RouteContext with route values, enrich the breadcrumbs with parameter values
-        EnrichBreadcrumbsWithRouteValues();
     }
     
-    private void EnrichBreadcrumbsWithRouteValues()
+    private string GetLabelForMatch(BreadcrumbRouteMatch match)
     {
-        if (RouteContext?.RouteValues == null || RouteContext.RouteValues.Count == 0)
-            return;
-            
-        // Find parameters in breadcrumb labels/URLs and replace with actual values
-        foreach (var breadcrumb in _breadcrumbs)
+        // Check for custom label first
+        if (CustomLabels != null)
         {
-            foreach (var kvp in RouteContext.RouteValues)
-            {
-                string paramName = kvp.Key;
-                string paramValue = kvp.Value?.ToString() ?? string.Empty;
-                
-                // If the breadcrumb contains the parameter name
-                if (breadcrumb.Label.Contains($"{{{paramName}}}"))
-                {
-                    breadcrumb.Label = breadcrumb.Label.Replace($"{{{paramName}}}", paramValue);
-                }
-                
-                if (breadcrumb.Url.Contains($"{{{paramName}}}"))
-                {
-                    var encodedValue = UrlEncoder.EncodeRouteParameter(paramValue);
-                    breadcrumb.Url = breadcrumb.Url.Replace($"{{{paramName}}}", encodedValue);
-                }
-            }
-        }
-    }
-    
-    private string GetLabelForSegment(string segment)
-    {
-        // Check for custom label in provided dictionary
-        if (CustomLabels != null && CustomLabels.TryGetValue(segment, out string? customLabel))
-            return customLabel;
-            
-        // Otherwise format the segment name (convert-kebab-case to Title Case)
-        return ToTitleCase(segment);
-    }
-    
-    private static string ToTitleCase(string text)
-    {
-        if (string.IsNullOrEmpty(text))
-            return string.Empty;
-            
-        StringBuilder result = new();
-        bool capitalizeNext = true;
-        
-        foreach (char c in text)
-        {
-            if (c == '-' || c == '_')
-            {
-                result.Append(' ');
-                capitalizeNext = true;
-            }
-            else
-            {
-                result.Append(capitalizeNext ? char.ToUpper(c) : c);
-                capitalizeNext = false;
-            }
+            var segment = match.Path.Split('/').LastOrDefault() ?? string.Empty;
+            if (CustomLabels.TryGetValue(segment, out string? customLabel))
+                return customLabel;
         }
         
-        return result.ToString();
+        // If this is a parameter, use the actual value if available
+        if (match.IsParameter && !string.IsNullOrEmpty(match.Label))
+        {
+            return match.Label;
+        }
+        
+        // Use the default label from the match
+        return string.IsNullOrEmpty(match.Label) ? "Unknown" : match.Label;
     }
+
     
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            NavigationManager.LocationChanged -= OnLocationChanged;
+        }
+    }
+
     public void Dispose()
     {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        Dispose(true);
+        GC.SuppressFinalize(this);
     }
 }
 

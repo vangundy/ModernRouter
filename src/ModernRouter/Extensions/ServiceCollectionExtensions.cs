@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
 using ModernRouter.Security;
+using ModernRouter.Services;
 
 namespace ModernRouter.Extensions;
 
@@ -18,6 +19,7 @@ public static class ServiceCollectionExtensions
     {
         // Register core services needed by ModernRouter
         services.AddScoped<INavMiddleware, ErrorHandlingMiddleware>();
+        services.AddSingleton<IRouteTableService, RouteTableService>();
         
         return services;
     }
