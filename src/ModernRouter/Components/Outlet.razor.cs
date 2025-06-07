@@ -11,6 +11,8 @@ public partial class Outlet
     [CascadingParameter] private RouteContext RouteContext { get; set; } = default!;
     [CascadingParameter(Name = "RouterErrorContent")]
     private RenderFragment<Exception>? RouterErrorContent { get; set; }
+    [CascadingParameter(Name = "NavigationProgress")]
+    private RenderFragment? NavigationProgress { get; set; }
 
     private object? _loaderData;
     private bool _loading;
@@ -26,6 +28,7 @@ public partial class Outlet
         if (RouteContext?.Matched?.LoaderType is { } loaderType)
         {
             _loading = true;
+            StateHasChanged(); // Trigger re-render to show progress
             try
             {
                 var loader = (IRouteDataLoader)ActivatorUtilities.CreateInstance(Services, loaderType);

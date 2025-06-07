@@ -2,7 +2,14 @@
 {
     @if (_loading)
     {
-        <p>Loading...</p>
+        @if (NavigationProgress is not null)
+        {
+            @NavigationProgress
+        }
+        else
+        {
+            <p>Loading...</p>
+        }
     }
     else if (_loaderException is not null)
     {

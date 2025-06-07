@@ -1,4 +1,8 @@
-﻿@if (_current?.Matched is null)
+﻿@if (_isNavigating && NavigationProgress is not null)
+{
+    @NavigationProgress
+}
+else if (_current?.Matched is null)
 {
     @NotFound
 }
@@ -6,26 +10,28 @@ else
 {
     <CascadingValue Value="_routeTable">
         <CascadingValue Value="ErrorContent" Name="RouterErrorContent">
-            <ErrorBoundary>
-                <ChildContent>
-                    <ModernRouter.Components.RouteView RouteEntry="_current.Matched"
-                                                       RemainingSegments="_current.RemainingSegments"
-                                                       RouteValues="_current.RouteValues" />
-                </ChildContent>
-                <ErrorContent Context="error">
-                    @if (ErrorContent is not null)
-                    {
-                        @ErrorContent(error)
-                    }
-                    else
-                    {
-                        <div class="router-error">
-                            <h1>Router Error</h1>
-                            <p>@error.Message</p>
-                        </div>
-                    }
-                </ErrorContent>
-            </ErrorBoundary>
+            <CascadingValue Value="NavigationProgress" Name="NavigationProgress">
+                <ErrorBoundary>
+                    <ChildContent>
+                        <ModernRouter.Components.RouteView RouteEntry="_current.Matched"
+                                                           RemainingSegments="_current.RemainingSegments"
+                                                           RouteValues="_current.RouteValues" />
+                    </ChildContent>
+                    <ErrorContent Context="error">
+                        @if (ErrorContent is not null)
+                        {
+                            @ErrorContent(error)
+                        }
+                        else
+                        {
+                            <div class="router-error">
+                                <h1>Router Error</h1>
+                                <p>@error.Message</p>
+                            </div>
+                        }
+                    </ErrorContent>
+                </ErrorBoundary>
+            </CascadingValue>
         </CascadingValue>
     </CascadingValue>
 }

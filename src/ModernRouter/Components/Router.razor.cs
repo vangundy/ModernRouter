@@ -15,10 +15,12 @@ public partial class Router
     [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
     [Parameter] public RenderFragment? NotFound { get; set; }
     [Parameter] public RenderFragment<Exception>? ErrorContent { get; set; }
+    [Parameter] public RenderFragment? NavigationProgress { get; set; }
 
     private List<RouteEntry> _routeTable = [];
     private RouteContext? _current; // Used in Router.razor template for rendering matched route
     private INavMiddleware[] _pipeline = [];
+    private bool _isNavigating = false;
 
     async protected override Task OnInitializedAsync()
     {
@@ -41,32 +43,53 @@ public partial class Router
 
     private async Task NavigateAsync(string absoluteUri, bool firstLoad)
     {
-        var relative = Nav.ToBaseRelativePath(absoluteUri);
-        var match = RouteMatcher.Match(_routeTable, relative);
-
-        var navContext = new NavContext
+        // Show progress indicator for navigation (except initial load)
+        if (!firstLoad)
         {
-            TargetUri = absoluteUri,
-            Match = match,
-            CancellationToken = CancellationToken.None
-        };
-
-        var result = await InvokePipelineAsync(navContext, 0);
-
-        if (result.Type == NavResultType.Cancel)
-        {
-            // undo browser url when cancelled (except initial load)
-            if (!firstLoad) Nav.NavigateTo(Nav.Uri, forceLoad: false, replace: true);
-            return;
-        }
-        if (result.RedirectUrl is not null)
-        {
-            Nav.NavigateTo(result.RedirectUrl, forceLoad: false);
-            return;
+            _isNavigating = true;
+            StateHasChanged();
         }
 
-        _current = match;
-        StateHasChanged();
+        try
+        {
+            // Add artificial delay to see progress indicator (remove in production)
+            if (!firstLoad)
+            {
+                await Task.Delay(1500);
+            }
+
+            var relative = Nav.ToBaseRelativePath(absoluteUri);
+            var match = RouteMatcher.Match(_routeTable, relative);
+
+            var navContext = new NavContext
+            {
+                TargetUri = absoluteUri,
+                Match = match,
+                CancellationToken = CancellationToken.None
+            };
+
+            var result = await InvokePipelineAsync(navContext, 0);
+
+            if (result.Type == NavResultType.Cancel)
+            {
+                // undo browser url when cancelled (except initial load)
+                if (!firstLoad) Nav.NavigateTo(Nav.Uri, forceLoad: false, replace: true);
+                return;
+            }
+            if (result.RedirectUrl is not null)
+            {
+                Nav.NavigateTo(result.RedirectUrl, forceLoad: false);
+                return;
+            }
+
+            _current = match;
+        }
+        finally
+        {
+            // Hide progress indicator
+            _isNavigating = false;
+            StateHasChanged();
+        }
     }
 
     private Task<NavResult> InvokePipelineAsync(NavContext navContext, int index)
