@@ -5,6 +5,7 @@ using ModernRouter.Services;
 using System.Reflection;
 
 namespace ModernRouter.Components;
+
 public partial class Router
 {
     [Inject] private IServiceProvider Services { get; set; } = default!;
@@ -21,16 +22,18 @@ public partial class Router
     private RouteContext? _current; // Used in Router.razor template for rendering matched route
     private INavMiddleware[] _pipeline = [];
     private bool _isNavigating = false;
+    private CancellationTokenSource? _currentNavigationCts;
+    private Exception? _navigationError;
 
     async protected override Task OnInitializedAsync()
     {
         var assemblies = new List<Assembly> { AppAssembly };
         if (AdditionalAssemblies is not null) assemblies.AddRange(AdditionalAssemblies);
         _routeTable = RouteTableFactory.Build(assemblies);
-        
+
         // Initialize the route table service
         RouteTableService.Initialize(assemblies);
-        
+
         // Register named routes
         RegisterNamedRoutes();
 
@@ -43,37 +46,54 @@ public partial class Router
 
     private async Task NavigateAsync(string absoluteUri, bool firstLoad)
     {
-        // Show progress indicator for navigation (except initial load)
-        if (!firstLoad)
+        // Cancel any pending navigation
+        if (_currentNavigationCts is not null)
         {
-            _isNavigating = true;
-            StateHasChanged();
+            _currentNavigationCts.Cancel();
+            _currentNavigationCts.Dispose();
+            _currentNavigationCts = null;
         }
+        _currentNavigationCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
+        // Show progress indicator
+        _isNavigating = !firstLoad;
+        StateHasChanged();
+
+        var relative = Nav.ToBaseRelativePath(absoluteUri);
+        var match = RouteMatcher.Match(_routeTable, relative);
+
+        NavContext navContext = new()
+        {
+            TargetUri = absoluteUri,
+            Match = match,
+            CancellationToken = _currentNavigationCts.Token
+        };
         try
         {
+            // Clear any previous navigation error
+            _navigationError = null;
+            
             // Add artificial delay to see progress indicator (remove in production)
             if (!firstLoad)
             {
                 await Task.Delay(1500);
             }
 
-            var relative = Nav.ToBaseRelativePath(absoluteUri);
-            var match = RouteMatcher.Match(_routeTable, relative);
-
-            var navContext = new NavContext
-            {
-                TargetUri = absoluteUri,
-                Match = match,
-                CancellationToken = CancellationToken.None
-            };
-
             var result = await InvokePipelineAsync(navContext, 0);
+
+            // Check if navigation was cancelled
+            _currentNavigationCts.Token.ThrowIfCancellationRequested();
 
             if (result.Type == NavResultType.Cancel)
             {
                 // undo browser url when cancelled (except initial load)
                 if (!firstLoad) Nav.NavigateTo(Nav.Uri, forceLoad: false, replace: true);
+                return;
+            }
+            if (result.Type == NavResultType.Error)
+            {
+                // Store the error for display in the UI
+                _navigationError = result.Exception ?? new Exception("Navigation pipeline error occurred");
                 return;
             }
             if (result.RedirectUrl is not null)
@@ -84,27 +104,53 @@ public partial class Router
 
             _current = match;
         }
+        catch (OperationCanceledException)
+        {
+            // Navigation was cancelled, do nothing
+        }
+        catch (Exception ex)
+        {
+            // Handle any unhandled exceptions from the pipeline
+            _navigationError = ex;
+        }
         finally
         {
-            // Hide progress indicator
-            _isNavigating = false;
-            StateHasChanged();
+            // Only clear navigation state if this is still the current navigation
+            if (_currentNavigationCts?.Token == navContext.CancellationToken)
+            {
+                // Hide progress indicator
+                _isNavigating = false;
+                StateHasChanged();
+
+                // Dispose the token source only after we're done with the navigation
+                var cts = _currentNavigationCts;
+                _currentNavigationCts = null;
+                cts.Dispose();
+            }
         }
     }
 
-    private Task<NavResult> InvokePipelineAsync(NavContext navContext, int index)
+    private async Task<NavResult> InvokePipelineAsync(NavContext navContext, int index)
     {
         if (index == _pipeline.Length)
-            return Task.FromResult(NavResult.Allow());
+            return NavResult.Allow();
 
-        return _pipeline[index].InvokeAsync(navContext, () => InvokePipelineAsync(navContext, index + 1));
+        try
+        {
+            return await _pipeline[index].InvokeAsync(navContext, () => InvokePipelineAsync(navContext, index + 1));
+        }
+        catch (Exception ex)
+        {
+            // Convert unhandled middleware exceptions to NavResult.Error
+            return NavResult.Error(ex);
+        }
     }
 
     private void RegisterNamedRoutes()
     {
         // Clear any existing named routes
         RouteNameService.Clear();
-        
+
         // Register routes that have names
         foreach (var route in _routeTable.Where(r => !string.IsNullOrEmpty(r.Name)))
         {
