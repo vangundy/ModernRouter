@@ -144,7 +144,8 @@ public static class UrlEncoder
         if (string.IsNullOrEmpty(value))
             return string.Empty;
 
-        return UrlValidator.SanitizeRouteParameter(value);
+        // Basic sanitization - remove dangerous characters
+        return System.Web.HttpUtility.UrlEncode(value);
     }
 
     /// <summary>

@@ -10,7 +10,7 @@ namespace ModernRouter.Components;
 public partial class HierarchicalBreadcrumbs : ComponentBase, IDisposable
 {
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] private IHierarchicalBreadcrumbService BreadcrumbService { get; set; } = default!;
+    [Inject] private IBreadcrumbService BreadcrumbService { get; set; } = default!;
 
     /// <summary>
     /// Breadcrumb options configuration
@@ -184,9 +184,10 @@ public partial class HierarchicalBreadcrumbs : ComponentBase, IDisposable
             _breadcrumbs.Clear();
             _breadcrumbs.AddRange(newBreadcrumbs);
             
-            // Fire hierarchy built event if this is the first time
-            if (_hierarchy == null)
+            // Update hierarchy reference and fire event if this is the first time
+            if (_hierarchy == null && BreadcrumbService.CurrentHierarchy != null)
             {
+                _hierarchy = BreadcrumbService.CurrentHierarchy;
                 InvokeAsync(() => OnHierarchyBuilt.InvokeAsync(_hierarchy));
             }
             

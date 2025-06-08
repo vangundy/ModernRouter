@@ -1,293 +1,73 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
 using ModernRouter.Services;
 
 namespace ModernRouter.Extensions;
 
-/// <summary>
-/// Extension methods for NavigationManager to work with query parameters and named routes
-/// </summary>
 public static class NavigationExtensions
 {
-    #region Query Parameter Extensions
-
-    /// <summary>
-    /// Gets the query parameters from the current URI
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <returns>QueryParameters instance</returns>
-    public static QueryParameters GetQueryParameters(this NavigationManager navigationManager)
+    public static QueryParameters GetQueryParameters(this NavigationManager nav)
     {
-        return QueryParameters.Parse(new Uri(navigationManager.Uri));
+        return QueryParameters.Parse(new Uri(nav.Uri));
     }
 
-    /// <summary>
-    /// Navigates to the specified URI with query parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="uri">Base URI to navigate to</param>
-    /// <param name="queryParameters">Query parameters to append</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    /// <exception cref="ArgumentException">Thrown when URI is invalid or unsafe</exception>
-    public static void NavigateTo(this NavigationManager navigationManager, string uri, QueryParameters queryParameters, bool forceLoad = false, bool replace = false)
+    public static void NavigateTo(this NavigationManager nav, string uri, QueryParameters queryParameters, bool forceLoad = false, bool replace = false)
     {
-        // Validate the base URI
-        var uriValidation = UrlValidator.ValidatePath(uri);
-        if (!uriValidation.IsValid)
-        {
-            throw new ArgumentException($"Invalid or unsafe URI: {string.Join(", ", uriValidation.Errors)}", nameof(uri));
-        }
-
         var queryString = queryParameters.ToQueryString(includeQuestionMark: false);
-        
-        // Validate the complete query string
-        if (!string.IsNullOrEmpty(queryString))
-        {
-            var queryValidation = UrlValidator.ValidateQueryString(queryString);
-            if (!queryValidation.IsValid)
-            {
-                throw new ArgumentException($"Invalid or unsafe query parameters: {string.Join(", ", queryValidation.Errors)}", nameof(queryParameters));
-            }
-        }
-        
         var fullUri = string.IsNullOrEmpty(queryString) ? uri : $"{uri}?{queryString}";
-        navigationManager.NavigateTo(fullUri, forceLoad, replace);
+        nav.NavigateTo(fullUri, forceLoad, replace);
     }
 
-    /// <summary>
-    /// Navigates to the specified route with route parameters and query parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeTemplate">Route template (e.g., "/users/{id}/posts/{slug}")</param>
-    /// <param name="routeValues">Route parameter values</param>
-    /// <param name="queryParameters">Query parameters to append</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    /// <exception cref="ArgumentException">Thrown when route template or parameters are invalid or unsafe</exception>
-    public static void NavigateToRoute(this NavigationManager navigationManager, string routeTemplate, 
-        Dictionary<string, object?> routeValues, QueryParameters? queryParameters = null, 
-        bool forceLoad = false, bool replace = false)
+    public static void NavigateWithQuery(this NavigationManager nav, string key, string? value, bool forceLoad = false, bool replace = false)
     {
-        // Validate route template
-        var templateValidation = UrlValidator.ValidatePath(routeTemplate);
-        if (!templateValidation.IsValid)
-        {
-            throw new ArgumentException($"Invalid route template: {string.Join(", ", templateValidation.Errors)}", nameof(routeTemplate));
-        }
-
-        // Validate route parameter values
-        foreach (var kvp in routeValues)
-        {
-            if (kvp.Value is string stringValue)
-            {
-                var paramValidation = UrlValidator.ValidateRouteParameter(stringValue, kvp.Key);
-                if (!paramValidation.IsValid)
-                {
-                    throw new ArgumentException($"Invalid route parameter '{kvp.Key}': {string.Join(", ", paramValidation.Errors)}", nameof(routeValues));
-                }
-            }
-        }
-
-        var path = UrlEncoder.BuildPath(routeTemplate, routeValues);
+        var queryParameters = nav.GetQueryParameters();
         
-        if (queryParameters != null && queryParameters.Count > 0)
-        {
-            navigationManager.NavigateTo(path, queryParameters, forceLoad, replace);
-        }
+        if (value == null)
+            queryParameters.Remove(key);
         else
-        {
-            // Still validate the generated path
-            var pathValidation = UrlValidator.ValidatePath(path);
-            if (!pathValidation.IsValid)
-            {
-                throw new ArgumentException($"Generated path is invalid: {string.Join(", ", pathValidation.Errors)}");
-            }
-            
-            navigationManager.NavigateTo(path, forceLoad, replace);
-        }
-    }
-
-    /// <summary>
-    /// Navigates to the specified route with route parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeTemplate">Route template (e.g., "/users/{id}")</param>
-    /// <param name="routeValues">Route parameter values</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void NavigateToRoute(this NavigationManager navigationManager, string routeTemplate, 
-        object routeValues, bool forceLoad = false, bool replace = false)
-    {
-        NavigateToRoute(navigationManager, routeTemplate, AnonymousObjectToDictionary(routeValues), null, forceLoad, replace);
-    }
-
-    /// <summary>
-    /// Navigates to the current URI with updated query parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="queryParameters">Query parameters to set</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void NavigateWithQuery(this NavigationManager navigationManager, QueryParameters queryParameters, bool forceLoad = false, bool replace = false)
-    {
-        var currentUri = navigationManager.ToBaseRelativePath(navigationManager.Uri);
+            queryParameters.Set(key, value);
+        
+        var currentUri = nav.ToBaseRelativePath(nav.Uri);
         var questionMarkIndex = currentUri.IndexOf('?');
         var pathPart = questionMarkIndex >= 0 ? currentUri[..questionMarkIndex] : currentUri;
         
-        navigationManager.NavigateTo(pathPart, queryParameters, forceLoad, replace);
+        nav.NavigateTo(pathPart, queryParameters, forceLoad, replace);
     }
 
-    /// <summary>
-    /// Navigates to the current URI with a single query parameter added or updated
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="key">Parameter key</param>
-    /// <param name="value">Parameter value</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void NavigateWithQuery(this NavigationManager navigationManager, string key, string? value, bool forceLoad = false, bool replace = false)
+    public static void NavigateWithQuery(this NavigationManager nav, Dictionary<string, string?> parameters, bool forceLoad = false, bool replace = false)
     {
-        var queryParameters = navigationManager.GetQueryParameters();
-        
-        if (value == null)
-        {
-            queryParameters.Remove(key);
-        }
-        else
-        {
-            queryParameters.Set(key, value);
-        }
-        
-        navigationManager.NavigateWithQuery(queryParameters, forceLoad, replace);
-    }
-
-    /// <summary>
-    /// Navigates to the current URI with multiple query parameters added or updated
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="parameters">Dictionary of parameters to set</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void NavigateWithQuery(this NavigationManager navigationManager, Dictionary<string, string?> parameters, bool forceLoad = false, bool replace = false)
-    {
-        var queryParameters = navigationManager.GetQueryParameters();
+        var queryParameters = nav.GetQueryParameters();
         
         foreach (var kvp in parameters)
         {
             if (kvp.Value == null)
-            {
                 queryParameters.Remove(kvp.Key);
-            }
             else
-            {
                 queryParameters.Set(kvp.Key, kvp.Value);
-            }
         }
         
-        navigationManager.NavigateWithQuery(queryParameters, forceLoad, replace);
-    }
-
-    /// <summary>
-    /// Removes a query parameter from the current URI and navigates
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="key">Parameter key to remove</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void RemoveQueryParameter(this NavigationManager navigationManager, string key, bool forceLoad = false, bool replace = false)
-    {
-        navigationManager.NavigateWithQuery(key, null, forceLoad, replace);
-    }
-
-    /// <summary>
-    /// Removes multiple query parameters from the current URI and navigates
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="keys">Parameter keys to remove</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void RemoveQueryParameters(this NavigationManager navigationManager, IEnumerable<string> keys, bool forceLoad = false, bool replace = false)
-    {
-        var queryParameters = navigationManager.GetQueryParameters();
+        var currentUri = nav.ToBaseRelativePath(nav.Uri);
+        var questionMarkIndex = currentUri.IndexOf('?');
+        var pathPart = questionMarkIndex >= 0 ? currentUri[..questionMarkIndex] : currentUri;
         
-        foreach (var key in keys)
-        {
-            queryParameters.Remove(key);
-        }
-        
-        navigationManager.NavigateWithQuery(queryParameters, forceLoad, replace);
+        nav.NavigateTo(pathPart, queryParameters, forceLoad, replace);
     }
 
-    /// <summary>
-    /// Clears all query parameters from the current URI and navigates
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    public static void ClearQueryParameters(this NavigationManager navigationManager, bool forceLoad = false, bool replace = false)
-    {
-        navigationManager.NavigateWithQuery(new QueryParameters(), forceLoad, replace);
-    }
-
-    #endregion
-
-    #region Named Route Extensions
-
-    /// <summary>
-    /// Navigates to a named route with parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeNameService">Route name service for URL generation</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="routeValues">Route parameter values (anonymous object or dictionary)</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    /// <exception cref="ArgumentException">Thrown when route name is not found or parameters are invalid</exception>
-    public static void NavigateToNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService, 
+    public static void NavigateToNamedRoute(this NavigationManager nav, IRouteNameService routeNames, 
         string routeName, object? routeValues = null, bool forceLoad = false, bool replace = false)
     {
-        var url = routeNameService.GenerateUrl(routeName, routeValues, validateParameters: true);
-        navigationManager.NavigateTo(url, forceLoad, replace);
+        var url = routeNames.GenerateUrl(routeName, routeValues);
+        nav.NavigateTo(url, forceLoad, replace);
     }
 
-    /// <summary>
-    /// Navigates to a named route with parameters and query parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeNameService">Route name service for URL generation</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="routeValues">Route parameter values</param>
-    /// <param name="queryParameters">Query parameters to append</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    /// <exception cref="ArgumentException">Thrown when route name is not found or parameters are invalid</exception>
-    public static void NavigateToNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
-        string routeName, object? routeValues, QueryParameters queryParameters, bool forceLoad = false, bool replace = false)
-    {
-        var url = routeNameService.GenerateUrl(routeName, routeValues, validateParameters: true);
-        navigationManager.NavigateTo(url, queryParameters, forceLoad, replace);
-    }
-
-    /// <summary>
-    /// Tries to navigate to a named route with parameters
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeNameService">Route name service for URL generation</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="routeValues">Route parameter values</param>
-    /// <param name="forceLoad">Whether to force load the page</param>
-    /// <param name="replace">Whether to replace the current entry in history</param>
-    /// <returns>True if navigation was successful</returns>
-    public static bool TryNavigateToNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
+    public static bool TryNavigateToNamedRoute(this NavigationManager nav, IRouteNameService routeNames,
         string routeName, object? routeValues = null, bool forceLoad = false, bool replace = false)
     {
-        if (routeNameService.TryGenerateUrl(routeName, routeValues, out var url))
+        if (routeNames.TryGenerateUrl(routeName, routeValues, out var url))
         {
             try
             {
-                navigationManager.NavigateTo(url, forceLoad, replace);
+                nav.NavigateTo(url, forceLoad, replace);
                 return true;
             }
             catch
@@ -298,131 +78,10 @@ public static class NavigationExtensions
         return false;
     }
 
-    /// <summary>
-    /// Generates a URL for a named route without navigating
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeNameService">Route name service for URL generation</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="routeValues">Route parameter values</param>
-    /// <param name="validateParameters">Whether to validate parameters for security</param>
-    /// <returns>Generated URL</returns>
-    /// <exception cref="ArgumentException">Thrown when route name is not found or parameters are invalid</exception>
-    public static string GetUrlForNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
-        string routeName, object? routeValues = null, bool validateParameters = true)
+    public static string GetUrlForNamedRoute(this NavigationManager nav, IRouteNameService routeNames,
+        string routeName, object? routeValues = null)
     {
-        return routeNameService.GenerateUrl(routeName, routeValues, validateParameters);
+        return routeNames.GenerateUrl(routeName, routeValues);
     }
 
-    /// <summary>
-    /// Tries to generate a URL for a named route without navigating
-    /// </summary>
-    /// <param name="navigationManager">Navigation manager instance</param>
-    /// <param name="routeNameService">Route name service for URL generation</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="routeValues">Route parameter values</param>
-    /// <param name="url">Generated URL if successful</param>
-    /// <param name="validateParameters">Whether to validate parameters for security</param>
-    /// <returns>True if URL generation was successful</returns>
-    public static bool TryGetUrlForNamedRoute(this NavigationManager navigationManager, IRouteNameService routeNameService,
-        string routeName, object? routeValues, out string url, bool validateParameters = true)
-    {
-        return routeNameService.TryGenerateUrl(routeName, routeValues, out url, validateParameters);
-    }
-
-    /// <summary>
-    /// Navigates to a named route with optional parameters (shorter syntax)
-    /// </summary>
-    /// <param name="nav">Navigation manager instance</param>
-    /// <param name="routeNames">Route name service</param>
-    /// <param name="routeName">Name of the route to navigate to</param>
-    /// <param name="parameters">Optional parameters for the route</param>
-    public static void NavigateTo(this NavigationManager nav, 
-        IRouteNameService routeNames, string routeName, object? parameters = null)
-    {
-        nav.NavigateToNamedRoute(routeNames, routeName, parameters);
-    }
-
-    /// <summary>
-    /// Gets the URL for a named route with optional parameters (shorter syntax)
-    /// </summary>
-    /// <param name="nav">Navigation manager instance</param>
-    /// <param name="routeNames">Route name service</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="parameters">Optional parameters for the route</param>
-    /// <returns>Generated URL for the named route</returns>
-    public static string GetUrl(this NavigationManager nav,
-        IRouteNameService routeNames, string routeName, object? parameters = null)
-    {
-        return nav.GetUrlForNamedRoute(routeNames, routeName, parameters);
-    }
-
-    /// <summary>
-    /// Navigates to a named route with optional parameters (direct extension on IRouteNameService)
-    /// </summary>
-    /// <param name="routeNames">Route name service</param>
-    /// <param name="routeName">Name of the route to navigate to</param>
-    /// <param name="parameters">Optional parameters for the route</param>
-    public static void NavigateTo(this IRouteNameService routeNames, 
-        string routeName, object? parameters = null)
-    {
-        var nav = ServiceProviderHelper.GetRequiredService<NavigationManager>();
-        nav.NavigateToNamedRoute(routeNames, routeName, parameters);
-    }
-
-    /// <summary>
-    /// Gets the URL for a named route with optional parameters (direct extension on IRouteNameService)
-    /// </summary>
-    /// <param name="routeNames">Route name service</param>
-    /// <param name="routeName">Name of the route</param>
-    /// <param name="parameters">Optional parameters for the route</param>
-    /// <returns>Generated URL for the named route</returns>
-    public static string GetUrl(this IRouteNameService routeNames,
-        string routeName, object? parameters = null)
-    {
-        var nav = ServiceProviderHelper.GetRequiredService<NavigationManager>();
-        return nav.GetUrlForNamedRoute(routeNames, routeName, parameters);
-    }
-
-    /// <summary>
-    /// Navigates to a named route, replacing the current history entry
-    /// </summary>
-    /// <param name="nav">Navigation manager instance</param>
-    /// <param name="routeNames">Route name service</param>
-    /// <param name="routeName">Name of the route to navigate to</param>
-    /// <param name="parameters">Optional parameters for the route</param>
-    public static void ReplaceWith(this NavigationManager nav,
-        IRouteNameService routeNames, string routeName, object? parameters = null)
-    {
-        var url = nav.GetUrlForNamedRoute(routeNames, routeName, parameters);
-        nav.NavigateTo(url, forceLoad: false, replace: true);
-    }
-
-    /// <summary>
-    /// Refreshes the current route
-    /// </summary>
-    /// <param name="nav">Navigation manager instance</param>
-    public static void RefreshCurrent(this NavigationManager nav)
-    {
-        nav.NavigateTo(nav.Uri, forceLoad: false, replace: true);
-    }
-
-    #endregion
-
-    #region Helper Methods
-
-    private static Dictionary<string, object?> AnonymousObjectToDictionary(object obj)
-    {
-        var dictionary = new Dictionary<string, object?>();
-        if (obj == null) return dictionary;
-        
-        foreach (var prop in obj.GetType().GetProperties())
-        {
-            dictionary[prop.Name] = prop.GetValue(obj);
-        }
-        
-        return dictionary;
-    }
-
-    #endregion
 }
