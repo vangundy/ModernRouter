@@ -119,9 +119,10 @@ public partial class Router
             }
 
             // Handle alias redirects to primary route
-            if (match.IsAliasMatch && match.MatchedAlias?.RedirectToPrimary is true)
+            if (match.IsAliasMatch && match.MatchedAlias?.RedirectToPrimary is true && match.Matched != null)
             {
                 Console.WriteLine($"Debug: Alias match detected for redirect. Alias: {match.MatchedAlias.TemplateString}, Primary: {match.Matched?.TemplateString}");
+                Console.WriteLine($"Debug: RouteValues: {string.Join(", ", match.RouteValues.Select(kv => $"{kv.Key}={kv.Value}"))}");
                 
                 // Generate the primary route URL with the same parameters
                 var primaryUrl = GeneratePrimaryRouteUrl(match);
@@ -208,13 +209,43 @@ public partial class Router
 
     private static string GeneratePrimaryRouteUrl(RouteContext routeContext)
     {
-        if (routeContext.Matched == null)
+        if (routeContext.Matched == null || !routeContext.IsAliasMatch)
             return string.Empty;
 
         try
         {
-            // Use the UrlEncoder to build the primary route URL with the matched parameters
-            return UrlEncoder.BuildPath(routeContext.Matched.TemplateString, routeContext.RouteValues);
+            var primaryTemplate = routeContext.Matched.TemplateString;
+            
+            // Ensure the primary template starts with a slash
+            if (!primaryTemplate.StartsWith('/'))
+                primaryTemplate = "/" + primaryTemplate;
+            
+            Console.WriteLine($"Debug: RouteValues before URL generation: {string.Join(", ", routeContext.RouteValues.Select(kv => $"{kv.Key}={kv.Value}"))}");
+            
+            // Replace parameter placeholders with actual values
+            string result = primaryTemplate;
+            foreach (var param in routeContext.RouteValues)
+            {
+                string placeholder = $"{{{param.Key}}}";
+                string placeholder2 = $"{{{param.Key}:int}}"; // Handle common constraints
+                
+                if (param.Value != null)
+                {
+                    string valueStr = param.Value.ToString() ?? string.Empty;
+                    result = result.Replace(placeholder, valueStr, StringComparison.OrdinalIgnoreCase);
+                    result = result.Replace(placeholder2, valueStr, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            
+            Console.WriteLine($"Debug: Generated URL after replacement: {result}");
+            
+            // Add query parameters if there are any
+            if (routeContext.QueryParameters.Count > 0)
+            {
+                result += routeContext.QueryParameters.ToString();
+            }
+            
+            return result;
         }
         catch (Exception ex)
         {
@@ -223,5 +254,4 @@ public partial class Router
             return string.Empty;
         }
     }
-
 }
