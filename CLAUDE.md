@@ -204,6 +204,219 @@ public class MyComponent : ComponentBase, IAnimationLifecycleHooks
 - Implicit usings enabled
 - Browser platform supported
 
+## Architecture Overview
+
+### Core Components and Their Purpose
+
+#### **Router** (`Router.razor` / `Router.razor.cs`)
+**Purpose**: The main routing component that orchestrates the entire navigation system.
+
+**Key Responsibilities**:
+- Initializes the route table from assemblies using `RouteTableFactory`
+- Listens to navigation events via `NavigationManager`
+- Runs navigation through a middleware pipeline
+- Manages loading states and error handling
+- Handles route animations and cancellation tokens
+- Provides cascading values to child components
+
+#### **RouteView** (`RouteView.razor` / `RouteView.razor.cs`)
+**Purpose**: Renders individual route components with data loading support.
+
+**Key Responsibilities**:
+- Uses `DynamicComponent` to render the matched route component
+- Handles route data loading via `IRouteDataLoader`
+- Manages loading states and error boundaries
+- Passes route parameters and remaining segments to components
+
+#### **Outlet** (`Outlet.razor` / `Outlet.razor.cs`)
+**Purpose**: Enables nested routing by rendering child routes within parent layouts.
+
+**Key Responsibilities**:
+- Receives remaining path segments from parent routes
+- Performs route matching on remaining segments
+- Renders nested components with their own data loading
+
+#### **Breadcrumbs** (`Breadcrumbs.razor` / `Breadcrumbs.razor.cs`)
+**Purpose**: Automatically generates navigation breadcrumbs based on current route.
+
+**Key Responsibilities**:
+- Uses `IBreadcrumbService` to build breadcrumb hierarchy
+- Provides customizable templates for rendering
+- Updates automatically on navigation changes
+
+### Core Services
+
+#### **IRouteTableService**
+**Purpose**: Centralized management of route definitions and matching logic.
+
+**Key Methods**:
+- `Initialize(assemblies)` - Builds route table from assemblies
+- `MatchRoute(path)` - Matches URL path to route definitions
+- `GetBreadcrumbMatches(path)` - Builds breadcrumb hierarchy
+
+#### **IRouteNameService**
+**Purpose**: Handles named route URL generation for type-safe navigation.
+
+#### **IBreadcrumbService**
+**Purpose**: Builds breadcrumb hierarchies with support for both basic and hierarchical patterns.
+
+#### **INavMiddleware Pipeline**
+**Purpose**: Extensible middleware pipeline for intercepting and controlling navigation.
+
+### Navigation Flow
+
+Here's what happens when a user navigates to a page:
+
+```
+User clicks link/enters URL
+         ↓
+NavigationManager.LocationChanged event fires
+         ↓
+Router.NavigateAsync() called
+         ↓
+1. Cancel any pending navigation
+2. Show progress indicator
+3. Parse URL and extract path/query
+4. RouteMatcher.Match() finds matching route
+5. Create NavContext with route info
+6. Run through middleware pipeline
+         ↓
+Middleware Pipeline (INavMiddleware[]):
+- ErrorHandlingMiddleware (always first)
+- AuthorizationMiddleware (if enabled)
+- Custom middleware (AuthGuard, UnsavedGuard, etc.)
+         ↓
+Pipeline Results:
+- NavResult.Allow() → Continue to render
+- NavResult.Redirect(url) → Navigate to different URL
+- NavResult.Cancel() → Restore previous URL
+- NavResult.Error(ex) → Show error UI
+         ↓
+If Allow: Update Router._current = matchedRoute
+         ↓
+Router.razor template renders:
+- RouteAnimationContainer (wraps with animations)
+- RouteView component with matched route
+         ↓
+RouteView renders:
+1. Check for IRouteDataLoader
+2. If loader exists: show loading → call LoadAsync() → render component
+3. If no loader: render component directly
+4. Use DynamicComponent with route parameters
+         ↓
+Component renders with route parameters
+```
+
+### Component Hierarchy
+
+```
+┌─────────────────────────────────────────┐
+│ App.razor                               │
+│ ┌─────────────────────────────────────┐ │
+│ │ Router                              │ │
+│ │ • Manages navigation                │ │
+│ │ • Runs middleware pipeline          │ │
+│ │ • Handles errors & loading states   │ │
+│ │ ┌─────────────────────────────────┐ │ │
+│ │ │ RouteAnimationContainer         │ │ │
+│ │ │ ┌─────────────────────────────┐ │ │ │
+│ │ │ │ RouteView                   │ │ │ │
+│ │ │ │ • Renders matched component │ │ │ │
+│ │ │ │ • Handles data loading      │ │ │ │
+│ │ │ │ • Error boundaries          │ │ │ │
+│ │ │ │ ┌─────────────────────────┐ │ │ │ │
+│ │ │ │ │ DynamicComponent        │ │ │ │ │
+│ │ │ │ │ (Your Page Component)   │ │ │ │ │
+│ │ │ │ │ ┌─────────────────────┐ │ │ │ │ │
+│ │ │ │ │ │ Outlet (optional)   │ │ │ │ │ │
+│ │ │ │ │ │ • Nested routing    │ │ │ │ │ │
+│ │ │ │ │ │ • Child components  │ │ │ │ │ │
+│ │ │ │ │ └─────────────────────┘ │ │ │ │ │
+│ │ │ │ └─────────────────────────┘ │ │ │ │
+│ │ │ └─────────────────────────────┘ │ │ │
+│ │ └─────────────────────────────────┘ │ │
+│ └─────────────────────────────────────┘ │
+└─────────────────────────────────────────┘
+
+Separate Components:
+┌─────────────────────┐
+│ Breadcrumbs         │
+│ • Uses Router state │
+│ • Auto-updates      │
+│ • Customizable UI   │
+└─────────────────────┘
+```
+
+### Key Abstractions
+
+#### **RouteEntry** - Route Definition
+```csharp
+public sealed record RouteEntry(RouteSegment[] Template, Type Component)
+{
+    public Type? LoaderType { get; init; }        // Data loader class
+    public string? Name { get; init; }            // Named route identifier  
+    public string TemplateString { get; init; }   // "/users/{id:int}"
+    public IReadOnlyList<RouteAlias> Aliases { get; init; } // Alternative URLs
+    public IReadOnlyList<Attribute> Attributes { get; init; } // Component attributes
+}
+```
+
+#### **RouteContext** - Match Result
+```csharp
+public sealed class RouteContext
+{
+    public RouteEntry? Matched { get; init; }           // Matched route definition
+    public string[] RemainingSegments { get; init; }    // For nested routing
+    public Dictionary<string, object?> RouteValues { get; init; } // Route parameters
+    public QueryParameters QueryParameters { get; init; } // Query string
+    public bool IsAliasMatch { get; init; }             // Matched via alias
+    public RouteAlias? MatchedAlias { get; init; }      // Which alias matched
+}
+```
+
+### Example Usage Patterns
+
+#### **Basic Route Definition**
+```csharp
+@page "/users/{id:int}"
+@attribute [RouteName("UserProfile")]
+@attribute [Breadcrumb("User Profile")]
+
+<h1>User: @Id</h1>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
+```
+
+#### **Nested Routing with Outlet**
+```csharp
+@page "/dashboard"
+<h1>Dashboard</h1>
+
+<nav>
+    <a href="/dashboard/overview">Overview</a>
+    <a href="/dashboard/reports">Reports</a>
+</nav>
+
+<ModernRouter.Components.Outlet />
+```
+
+#### **Custom Middleware**
+```csharp
+public class AuthGuard : INavMiddleware
+{
+    public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next)
+    {
+        // Check if route requires authentication
+        if (RequiresAuth(ctx.Match?.Matched) && !IsAuthenticated())
+            return NavResult.Redirect("/login");
+            
+        return await next(); // Continue pipeline
+    }
+}
+```
+
 ## Common Tasks
 - Adding new routing features
 - Enhancing component functionality
