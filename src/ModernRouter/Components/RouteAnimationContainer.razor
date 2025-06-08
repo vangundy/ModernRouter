@@ -1,0 +1,225 @@
+@using ModernRouter.Animations
+@using ModernRouter.Routing
+@implements IDisposable
+@inject IRouteAnimationService AnimationService
+
+<div class="route-animation-container" data-route-component="@RouteEntry?.Component?.Name">
+    @if (_isAnimating)
+    {
+        @if (_previousContent != null && _isExiting)
+        {
+            <div class="route-exit-container">
+                @_previousContent
+            </div>
+        }
+        @if (_currentContent != null && _isEntering)
+        {
+            <div class="route-enter-container">
+                @_currentContent
+            </div>
+        }
+    }
+    else
+    {
+        @_currentContent
+    }
+</div>
+
+@code {
+    [Parameter] public RouteEntry? RouteEntry { get; set; }
+    [Parameter] public RouteAnimationContext? AnimationContext { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private RenderFragment? _currentContent;
+    private RenderFragment? _previousContent;
+    private RouteEntry? _previousRouteEntry;
+    private bool _isAnimating;
+    private bool _isExiting;
+    private bool _isEntering;
+    private CancellationTokenSource? _animationCts;
+
+    protected override void OnParametersSet()
+    {
+        // Check if route changed
+        if (RouteEntry != _previousRouteEntry && _previousRouteEntry != null)
+        {
+            HandleRouteChange();
+        }
+        else
+        {
+            _currentContent = ChildContent;
+        }
+
+        _previousRouteEntry = RouteEntry;
+    }
+
+    private void HandleRouteChange()
+    {
+        if (AnimationContext == null || RouteEntry == null)
+        {
+            _currentContent = ChildContent;
+            return;
+        }
+
+        // Store previous content for exit animation
+        _previousContent = _currentContent;
+        _currentContent = ChildContent;
+
+        // Start animation sequence
+        _ = Task.Run(async () => await AnimateRouteTransition());
+    }
+
+    private async Task AnimateRouteTransition()
+    {
+        if (AnimationContext == null || RouteEntry == null) return;
+
+        try
+        {
+            _animationCts?.Cancel();
+            _animationCts?.Dispose();
+            _animationCts = new CancellationTokenSource();
+
+            var context = AnimationContext with { CancellationToken = _animationCts.Token };
+
+            _isAnimating = true;
+            await InvokeAsync(StateHasChanged);
+
+            // Exit animation for previous content
+            if (_previousContent != null && _previousRouteEntry != null)
+            {
+                _isExiting = true;
+                await InvokeAsync(StateHasChanged);
+
+                var previousComponent = CreateComponentInstance(_previousRouteEntry);
+                if (previousComponent != null)
+                {
+                    // Lifecycle hook: Animation starting
+                    if (previousComponent is IAnimationLifecycleHooks hooks)
+                    {
+                        await hooks.OnAnimationStartAsync(AnimationPhase.Exit, context);
+                    }
+
+                    var exitResult = await AnimationService.BeginExitAsync(previousComponent, context);
+                    if (exitResult.Success && exitResult.Duration > TimeSpan.Zero)
+                    {
+                        await Task.Delay(exitResult.Duration, context.CancellationToken);
+                    }
+
+                    // Lifecycle hook: Animation complete
+                    if (previousComponent is IAnimationLifecycleHooks hooksComplete)
+                    {
+                        await hooksComplete.OnAnimationCompleteAsync(AnimationPhase.Exit, context, exitResult);
+                    }
+                }
+
+                _isExiting = false;
+                _previousContent = null;
+                await InvokeAsync(StateHasChanged);
+            }
+
+            // Enter animation for new content
+            if (_currentContent != null)
+            {
+                _isEntering = true;
+                await InvokeAsync(StateHasChanged);
+
+                var currentComponent = CreateComponentInstance(RouteEntry);
+                if (currentComponent != null)
+                {
+                    // Lifecycle hook: Animation starting
+                    if (currentComponent is IAnimationLifecycleHooks hooks)
+                    {
+                        await hooks.OnAnimationStartAsync(AnimationPhase.Enter, context);
+                    }
+
+                    var enterResult = await AnimationService.BeginEnterAsync(currentComponent, context);
+                    if (enterResult.Success && enterResult.Duration > TimeSpan.Zero)
+                    {
+                        await Task.Delay(enterResult.Duration, context.CancellationToken);
+                    }
+
+                    // Lifecycle hook: Animation complete
+                    if (currentComponent is IAnimationLifecycleHooks hooksComplete)
+                    {
+                        await hooksComplete.OnAnimationCompleteAsync(AnimationPhase.Enter, context, enterResult);
+                    }
+                }
+
+                _isEntering = false;
+                await InvokeAsync(StateHasChanged);
+            }
+
+            _isAnimating = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException)
+        {
+            // Animation was cancelled - notify hooks and reset state
+            await NotifyAnimationCancelled(AnimationContext ?? new RouteAnimationContext());
+            _isAnimating = false;
+            _isExiting = false;
+            _isEntering = false;
+            _previousContent = null;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't crash
+            Console.WriteLine($"Route animation error: {ex.Message}");
+            _isAnimating = false;
+            _isExiting = false;
+            _isEntering = false;
+            _previousContent = null;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task NotifyAnimationCancelled(RouteAnimationContext context)
+    {
+        try
+        {
+            // Notify previous component
+            if (_previousRouteEntry != null)
+            {
+                var previousComponent = CreateComponentInstance(_previousRouteEntry);
+                if (previousComponent is IAnimationLifecycleHooks hooks)
+                {
+                    await hooks.OnAnimationCancelledAsync(AnimationPhase.Exit, context);
+                }
+            }
+
+            // Notify current component
+            if (RouteEntry != null)
+            {
+                var currentComponent = CreateComponentInstance(RouteEntry);
+                if (currentComponent is IAnimationLifecycleHooks hooks)
+                {
+                    await hooks.OnAnimationCancelledAsync(AnimationPhase.Enter, context);
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors in cancellation notification
+        }
+    }
+
+    private ComponentBase? CreateComponentInstance(RouteEntry routeEntry)
+    {
+        try
+        {
+            if (routeEntry.Component == null) return null;
+            return (ComponentBase?)Activator.CreateInstance(routeEntry.Component);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public void Dispose()
+    {
+        _animationCts?.Cancel();
+        _animationCts?.Dispose();
+    }
+}

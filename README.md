@@ -212,6 +212,85 @@ string canonicalUrl = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { i
 <Outlet />
 ```
 
+### Route Transition Animations
+
+ModernRouter provides smooth, performant route transition animations using CSS-based effects that respect user accessibility preferences.
+
+#### **Basic Usage**
+
+```razor
+@page "/my-page"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("fadeIn", "fadeOut")]
+
+<h1>My Animated Page</h1>
+```
+
+#### **Built-in Animations**
+
+- **Fade**: `fadeIn`, `fadeOut` - Smooth opacity transitions
+- **Slide**: `slideLeft`, `slideRight`, `slideUp`, `slideDown` - Directional slide effects
+- **Scale**: `scaleIn`, `scaleOut` - Zoom-like scaling transitions
+- **Zoom**: `zoomIn`, `zoomOut` - Dramatic zoom effects
+- **Page Transition**: `pageTransition` - Subtle slide perfect for general navigation
+
+#### **Custom Configuration**
+
+```razor
+@attribute [RouteAnimation(
+    EnterAnimation = "scaleIn", 
+    ExitAnimation = "fadeOut",
+    Duration = 500,
+    Easing = AnimationEasing.EaseOutBack
+)]
+```
+
+#### **Service Registration**
+
+```csharp
+// Basic animations
+builder.Services.AddModernRouter();
+
+// With animation configuration
+builder.Services.AddModernRouterWithAnimations(options =>
+{
+    options.EnableAnimations = true;
+    options.DefaultDuration = 300;
+    options.RespectReducedMotion = true;
+});
+```
+
+#### **Animation Lifecycle Hooks**
+
+Components can implement `IAnimationLifecycleHooks` for custom animation logic:
+
+```csharp
+public class MyComponent : ComponentBase, IAnimationLifecycleHooks
+{
+    public async Task OnAnimationStartAsync(AnimationPhase phase, RouteAnimationContext context)
+    {
+        // Custom logic when animation starts
+    }
+
+    public async Task OnAnimationCompleteAsync(AnimationPhase phase, RouteAnimationContext context, AnimationResult result)
+    {
+        // Custom logic when animation completes
+    }
+
+    public async Task OnAnimationCancelledAsync(AnimationPhase phase, RouteAnimationContext context)
+    {
+        // Custom logic when animation is cancelled
+    }
+}
+```
+
+#### **Performance & Accessibility**
+
+- **GPU Accelerated**: CSS-based animations leverage hardware acceleration
+- **Cancellation Support**: Animations respect navigation cancellation tokens
+- **Reduced Motion**: Automatically respects `prefers-reduced-motion` media query
+- **Minimal Overhead**: Only adds cost when animations are configured
+
 ### Route Aliases
 
 Route aliases allow you to define multiple URL paths that lead to the same component, enabling powerful scenarios for real-world applications.
@@ -993,12 +1072,13 @@ For support, please open an issue on the [GitHub repository](https://github.com/
 - [x] Comprehensive URL validation and security features
 - [x] Route table service for centralized route management
 - [x] Route aliases with redirect support and priority system
+- [x] **Route transition animations** - CSS-based animations with lifecycle hooks
 
 ### Planned Features 🚧
+- [ ] **Route caching system** - LRU cache for route match results in high-traffic scenarios
 - [ ] Add support for lazy loading of route components
 - [ ] Implement route prefetching for improved performance
 - [ ] Add support for scroll restoration on navigation
-- [ ] Implement route transition animations
 - [ ] Add support for source generation of route tables to improve performance
 - [ ] Concurrent prefetching of data loaders
 - [ ] Implement caching for loaders to enhance performance and reduce redundant data fetching

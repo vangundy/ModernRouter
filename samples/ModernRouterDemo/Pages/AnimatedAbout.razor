@@ -1,0 +1,213 @@
+@page "/animated-about"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("pageTransition", Duration = 250)]
+@attribute [RouteName("AnimatedAbout")]
+
+<h1>About ModernRouter Animations</h1>
+
+<div class="demo-content">
+    <div class="intro-section">
+        <p class="lead">This page demonstrates the page transition animation - a subtle slide effect perfect for general navigation.</p>
+    </div>
+    
+    <div class="feature-showcase">
+        <div class="feature">
+            <div class="feature-icon">🎭</div>
+            <h3>Multiple Animation Types</h3>
+            <p>ModernRouter supports various animation types including fade, slide, scale, zoom, and custom page transitions.</p>
+        </div>
+        
+        <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>High Performance</h3>
+            <p>CSS-based animations leverage GPU acceleration for smooth, performant transitions that don't block the UI thread.</p>
+        </div>
+        
+        <div class="feature">
+            <div class="feature-icon">🎨</div>
+            <h3>Customizable</h3>
+            <p>Define custom animations, configure duration and easing, or use the built-in animation library.</p>
+        </div>
+        
+        <div class="feature">
+            <div class="feature-icon">♿</div>
+            <h3>Accessible</h3>
+            <p>Respects user preferences for reduced motion, ensuring a comfortable experience for all users.</p>
+        </div>
+        
+        <div class="feature">
+            <div class="feature-icon">🔧</div>
+            <h3>Easy Integration</h3>
+            <p>Simple attribute-based configuration makes adding animations to your routes effortless.</p>
+        </div>
+        
+        <div class="feature">
+            <div class="feature-icon">📱</div>
+            <h3>Responsive</h3>
+            <p>Animations work seamlessly across all device sizes and viewport orientations.</p>
+        </div>
+    </div>
+    
+    <div class="code-example">
+        <h3>Usage Example</h3>
+        <pre><code>@@page "/my-page"
+@@using ModernRouter.Animations
+@@attribute [RouteAnimation("fadeIn", "fadeOut")]
+
+&lt;h1&gt;My Animated Page&lt;/h1&gt;</code></pre>
+    </div>
+    
+    <div class="navigation-actions">
+        <NavLink href="/animated-profile/789" class="btn btn-secondary">← Back to Profile</NavLink>
+        <NavLink href="/animated-home" class="btn btn-primary">Home Page →</NavLink>
+    </div>
+</div>
+
+<style>
+    .demo-content {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .intro-section {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+    }
+    
+    .lead {
+        font-size: 1.25rem;
+        margin: 0;
+        line-height: 1.6;
+    }
+    
+    .feature-showcase {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin: 3rem 0;
+    }
+    
+    .feature {
+        padding: 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #f0f0f0;
+    }
+    
+    .feature:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .feature h3 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        font-size: 1.3rem;
+    }
+    
+    .feature p {
+        margin: 0;
+        color: #666;
+        line-height: 1.6;
+    }
+    
+    .code-example {
+        margin: 3rem 0;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border-left: 4px solid #28a745;
+    }
+    
+    .code-example h3 {
+        margin-top: 0;
+        color: #333;
+        font-size: 1.3rem;
+    }
+    
+    .code-example pre {
+        margin: 1rem 0 0 0;
+        padding: 1.5rem;
+        background: #2d3748;
+        color: #e2e8f0;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    .code-example code {
+        color: inherit;
+        background: none;
+        padding: 0;
+    }
+    
+    .navigation-actions {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    @media (max-width: 768px) {
+        .demo-content {
+            padding: 1rem;
+        }
+        
+        .feature-showcase {
+            grid-template-columns: 1fr;
+        }
+        
+        .intro-section {
+            padding: 1.5rem;
+        }
+        
+        .lead {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+@code {
+    
+}

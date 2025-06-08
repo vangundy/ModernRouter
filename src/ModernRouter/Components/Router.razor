@@ -27,9 +27,13 @@ else
             <CascadingValue Value="NavigationProgress" Name="NavigationProgress">
                 <ErrorBoundary>
                     <ChildContent>
-                        <ModernRouter.Components.RouteView RouteEntry="_current.Matched"
-                                                           RemainingSegments="_current.RemainingSegments"
-                                                           RouteValues="_current.RouteValues" />
+                        <ModernRouter.Components.RouteAnimationContainer 
+                            RouteEntry="_current.Matched"
+                            AnimationContext="_animationContext">
+                            <ModernRouter.Components.RouteView RouteEntry="_current.Matched"
+                                                               RemainingSegments="_current.RemainingSegments"
+                                                               RouteValues="_current.RouteValues" />
+                        </ModernRouter.Components.RouteAnimationContainer>
                     </ChildContent>
                     <ErrorContent Context="error">
                         @if (ErrorContent is not null)

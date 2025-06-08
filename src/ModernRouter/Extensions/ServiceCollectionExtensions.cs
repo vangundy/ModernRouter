@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using ModernRouter.Animations;
 using ModernRouter.Routing;
 using ModernRouter.Security;
 using ModernRouter.Services;
@@ -22,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRouteTableService, RouteTableService>();
         services.AddSingleton<IRouteNameService, RouteNameService>();
         services.AddSingleton<IBreadcrumbService, BreadcrumbService>();
+        services.AddSingleton<IRouteAnimationService, RouteAnimationService>();
 
         return services;
     }
@@ -49,6 +51,53 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Adds ModernRouter services with animation support to the specified <see cref="IServiceCollection" />.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <param name="configureAnimations">A callback to configure animation options.</param>
+    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
+    public static IServiceCollection AddModernRouterWithAnimations(
+        this IServiceCollection services,
+        Action<AnimationOptions>? configureAnimations = null)
+    {
+        // Register base services
+        services.AddModernRouter();
+
+        // Configure animation options
+        var options = new AnimationOptions();
+        configureAnimations?.Invoke(options);
+        services.AddSingleton(options);
+
+        return services;
+    }
+}
+
+/// <summary>
+/// Options for configuring ModernRouter animations.
+/// </summary>
+public class AnimationOptions
+{
+    /// <summary>
+    /// Gets or sets whether animations are enabled globally.
+    /// </summary>
+    public bool EnableAnimations { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the default animation duration in milliseconds.
+    /// </summary>
+    public int DefaultDuration { get; set; } = 300;
+
+    /// <summary>
+    /// Gets or sets the default animation easing.
+    /// </summary>
+    public AnimationEasing DefaultEasing { get; set; } = AnimationEasing.EaseInOut;
+
+    /// <summary>
+    /// Gets or sets whether to respect the user's reduced motion preference.
+    /// </summary>
+    public bool RespectReducedMotion { get; set; } = true;
 }
 
 /// <summary>

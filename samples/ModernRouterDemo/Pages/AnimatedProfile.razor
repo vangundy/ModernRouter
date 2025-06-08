@@ -1,0 +1,213 @@
+@page "/animated-profile/{id:int}"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("scaleIn", "scaleOut")]
+@attribute [RouteName("AnimatedProfile")]
+
+<h1>Animated User Profile</h1>
+
+<div class="demo-content">
+    <div class="profile-header">
+        <div class="avatar">
+            <div class="avatar-circle">
+                @Id.ToString()[0]
+            </div>
+        </div>
+        <h2>User @Id</h2>
+        <p class="user-title">Software Developer</p>
+    </div>
+    
+    <div class="profile-sections">
+        <div class="profile-section">
+            <h3>About</h3>
+            <p>This is a demo user profile page showcasing scale-in and scale-out animations. The page smoothly scales in when entering and scales out when exiting.</p>
+        </div>
+        
+        <div class="profile-section">
+            <h3>Skills</h3>
+            <div class="skills-list">
+                <span class="skill-tag">C#</span>
+                <span class="skill-tag">Blazor</span>
+                <span class="skill-tag">JavaScript</span>
+                <span class="skill-tag">CSS</span>
+                <span class="skill-tag">HTML</span>
+            </div>
+        </div>
+        
+        <div class="profile-section">
+            <h3>Experience</h3>
+            <div class="experience-item">
+                <h4>Senior Developer</h4>
+                <p>Tech Company • 2020 - Present</p>
+            </div>
+            <div class="experience-item">
+                <h4>Full Stack Developer</h4>
+                <p>Startup Inc • 2018 - 2020</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navigation-actions">
+        <NavLink href="/animated-products" class="btn btn-secondary">← Back to Products</NavLink>
+        <NavLink href="/animated-about" class="btn btn-primary">About Page →</NavLink>
+    </div>
+</div>
+
+<style>
+    .demo-content {
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .profile-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .avatar {
+        margin-bottom: 1rem;
+    }
+    
+    .avatar-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0 auto;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .profile-header h2 {
+        margin: 1rem 0 0.5rem 0;
+        color: #333;
+        font-size: 2rem;
+    }
+    
+    .user-title {
+        color: #666;
+        font-size: 1.1rem;
+        margin: 0;
+    }
+    
+    .profile-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+    
+    .profile-section {
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .profile-section h3 {
+        margin-top: 0;
+        color: #333;
+        font-size: 1.3rem;
+    }
+    
+    .skills-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .skill-tag {
+        padding: 0.5rem 1rem;
+        background: #007bff;
+        color: white;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .experience-item {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .experience-item:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .experience-item h4 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+    
+    .experience-item p {
+        margin: 0;
+        color: #666;
+        font-style: italic;
+    }
+    
+    .navigation-actions {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    @media (max-width: 768px) {
+        .demo-content {
+            padding: 1rem;
+        }
+        
+        .avatar-circle {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+        }
+        
+        .profile-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .skills-list {
+            justify-content: center;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}

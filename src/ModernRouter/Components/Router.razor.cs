@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+using ModernRouter.Animations;
 using ModernRouter.Routing;
 using ModernRouter.Services;
 using System.Reflection;
@@ -24,6 +25,7 @@ public partial class Router
     private bool _isNavigating = false;
     private CancellationTokenSource? _currentNavigationCts;
     private Exception? _navigationError;
+    private RouteAnimationContext? _animationContext;
 
     async protected override Task OnInitializedAsync()
     {
@@ -66,6 +68,16 @@ public partial class Router
 
         var relative = Nav.ToBaseRelativePath(absoluteUri);
         var match = RouteMatcher.Match(_routeTable, relative);
+
+        // Create animation context for route transitions
+        _animationContext = new RouteAnimationContext
+        {
+            FromRoute = _current?.Matched?.TemplateString ?? "",
+            ToRoute = match.Matched?.TemplateString ?? "",
+            RouteValues = match.RouteValues,
+            NavigationType = firstLoad ? NavigationType.Push : NavigationType.Push, // Could be enhanced to detect back/forward
+            CancellationToken = _currentNavigationCts.Token
+        };
 
         NavContext navContext = new()
         {

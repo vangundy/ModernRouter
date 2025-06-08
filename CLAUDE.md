@@ -51,6 +51,14 @@ builder.Services.AddModernRouterWithAuthorization(options =>
     options.LoginPath = "/login";
     options.ForbiddenPath = "/forbidden";
 });
+
+// Or with animations
+builder.Services.AddModernRouterWithAnimations(options =>
+{
+    options.EnableAnimations = true;
+    options.DefaultDuration = 300;
+    options.RespectReducedMotion = true;
+});
 ```
 
 ## Recent Enhancements
@@ -62,6 +70,8 @@ builder.Services.AddModernRouterWithAuthorization(options =>
 - ✅ Protection against XSS, SQL injection, and path traversal attacks
 - ✅ Named route support for URL generation
 - ✅ Type-safe navigation with route names
+- ✅ Route aliases with redirect support and priority system
+- ✅ Route transition animations with CSS-based effects and lifecycle hooks
 - ✅ Service registration required for proper functionality
 
 ## Security Features
@@ -125,6 +135,65 @@ try
 catch (ArgumentException ex)
 {
     // Handle invalid route name or parameters
+}
+```
+
+## Route Animation Usage
+
+### Basic Animation Setup
+```csharp
+// Component with fade animation
+@page "/my-page"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("fadeIn", "fadeOut")]
+
+<h1>My Animated Page</h1>
+```
+
+### Available Built-in Animations
+- `fadeIn`, `fadeOut` - Smooth opacity transitions
+- `slideLeft`, `slideRight`, `slideUp`, `slideDown` - Directional slides
+- `scaleIn`, `scaleOut` - Zoom-like scaling effects
+- `zoomIn`, `zoomOut` - Dramatic zoom transitions
+- `pageTransition` - Subtle slide for general navigation
+- `modalEntry` - Perfect for dialog-like pages
+
+### Custom Animation Configuration
+```csharp
+@attribute [RouteAnimation(
+    EnterAnimation = "scaleIn", 
+    ExitAnimation = "fadeOut",
+    Duration = 500,
+    Easing = AnimationEasing.EaseOutBack
+)]
+```
+
+### Animation Lifecycle Hooks
+```csharp
+public class MyComponent : ComponentBase, IAnimationLifecycleHooks
+{
+    public async Task OnAnimationStartAsync(AnimationPhase phase, RouteAnimationContext context)
+    {
+        // Custom logic when animation starts
+        if (phase == AnimationPhase.Enter)
+        {
+            // Prepare for entry animation
+        }
+    }
+
+    public async Task OnAnimationCompleteAsync(AnimationPhase phase, RouteAnimationContext context, AnimationResult result)
+    {
+        // Custom logic when animation completes
+        if (result.Success && phase == AnimationPhase.Enter)
+        {
+            // Animation completed successfully
+        }
+    }
+
+    public async Task OnAnimationCancelledAsync(AnimationPhase phase, RouteAnimationContext context)
+    {
+        // Handle animation cancellation
+    }
 }
 ```
 
