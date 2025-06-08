@@ -113,6 +113,18 @@ public partial class Router
                 return;
             }
 
+            // Handle alias redirects to primary route
+            if (match.IsAliasMatch && match.MatchedAlias?.RedirectToPrimary is true)
+            {
+                // Generate the primary route URL with the same parameters
+                var primaryUrl = GeneratePrimaryRouteUrl(match);
+                if (!string.IsNullOrEmpty(primaryUrl))
+                {
+                    Nav.NavigateTo(primaryUrl, forceLoad: false, replace: true);
+                    return;
+                }
+            }
+
             _current = match;
         }
         catch (OperationCanceledException)
@@ -177,6 +189,24 @@ public partial class Router
         foreach (var route in _routeTable.Where(r => !string.IsNullOrEmpty(r.Name)))
         {
             RouteNameService.RegisterRoute(route.Name!, route);
+        }
+    }
+
+    private string GeneratePrimaryRouteUrl(RouteContext routeContext)
+    {
+        if (routeContext.Matched == null)
+            return string.Empty;
+
+        try
+        {
+            // Use the UrlEncoder to build the primary route URL with the matched parameters
+            return UrlEncoder.BuildPath(routeContext.Matched.TemplateString, routeContext.RouteValues);
+        }
+        catch (Exception ex)
+        {
+            // Log the error but don't fail navigation
+            Console.WriteLine($"Warning: Failed to generate primary route URL: {ex.Message}");
+            return string.Empty;
         }
     }
 

@@ -1,0 +1,180 @@
+@page "/articles/{id:int}"
+@attribute [RouteAlias("/posts/{id:int}", RedirectToPrimary = true)]
+@attribute [RouteAlias("/blog/{id:int}", RedirectToPrimary = true)]
+@attribute [RouteName("ArticleView")]
+@using ModernRouter.Components
+@using ModernRouter.Routing
+
+<PageTitle>Article View - ModernRouter Demo</PageTitle>
+
+<div class="container">
+    <!-- Breadcrumb Component -->
+    <Breadcrumbs Options="@breadcrumbOptions" />
+
+    <div class="page-header">
+        <h1>📰 Article View</h1>
+        <p class="page-description">Article ID: @Id</p>
+        <div class="alert alert-info">
+            <strong>🔄 Redirect Demo:</strong> Try accessing this page via legacy URLs like 
+            <code>/posts/@Id</code> or <code>/blog/@Id</code> - they will redirect to the canonical URL <code>/articles/@Id</code>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔄 Redirect-to-Primary Demo</h2>
+        <p>This page demonstrates route aliases with redirect functionality:</p>
+        
+        <div class="url-list">
+            <div class="url-item">
+                <strong>Canonical URL:</strong> 
+                <a href="/articles/@Id">/articles/@Id</a>
+                <span class="badge primary">Primary</span>
+            </div>
+            <div class="url-item">
+                <strong>Legacy Posts URL:</strong> 
+                <a href="/posts/@Id">/posts/@Id</a>
+                <span class="badge redirect">Redirects to Primary</span>
+            </div>
+            <div class="url-item">
+                <strong>Legacy Blog URL:</strong> 
+                <a href="/blog/@Id">/blog/@Id</a>
+                <span class="badge redirect">Redirects to Primary</span>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h4>How It Works:</h4>
+            <p>When you click the legacy URLs above, you'll be automatically redirected to the canonical URL. 
+            This is useful for:</p>
+            <ul>
+                <li><strong>SEO:</strong> Ensures search engines index the canonical URL</li>
+                <li><strong>Analytics:</strong> Consolidates traffic metrics</li>
+                <li><strong>URL Consistency:</strong> Provides a single source of truth</li>
+                <li><strong>Migration:</strong> Smooth transition from old URL structures</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="article-content">
+        <h3>📄 Article Content</h3>
+        <div class="content-card">
+            <h4>Sample Article @Id</h4>
+            <p><strong>Published:</strong> @DateTime.Now.AddDays(-Id).ToString("MMMM dd, yyyy")</p>
+            <p><strong>Author:</strong> @(Id % 3 == 0 ? "Jane Doe" : Id % 2 == 0 ? "John Smith" : "Alex Johnson")</p>
+            <p><strong>Category:</strong> @(Id % 4 == 0 ? "Technology" : Id % 3 == 0 ? "Business" : Id % 2 == 0 ? "Lifestyle" : "Opinion")</p>
+            <div class="article-body">
+                <p>This is a sample article demonstrating the route alias redirect functionality in ModernRouter. 
+                The content shows how aliases can be used to maintain backward compatibility while migrating to new URL structures.</p>
+                <p>In a real application, this content would be loaded from a database or CMS based on the article ID (@Id).</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="action-section">
+        <h3>🔗 Test Different Articles</h3>
+        <div class="action-grid">
+            <button @onclick="@(() => NavigationManager.NavigateTo("/articles/1"))" class="btn btn-primary">
+                📰 Article 1 (Canonical)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/posts/2"))" class="btn btn-warning">
+                📰 Article 2 (Legacy - Redirects)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/blog/3"))" class="btn btn-warning">
+                📰 Article 3 (Legacy - Redirects)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/"))" class="btn btn-secondary">
+                🏠 Back to Home
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private BreadcrumbOptions breadcrumbOptions = new()
+    {
+        HomeLabel = "🏠 Demo Home",
+        HomeUrl = "/",
+        Separator = "→",
+        ShowIcons = true,
+        ShowDescriptions = true,
+        Animation = BreadcrumbAnimation.Slide,
+        ContainerCssClass = "page-breadcrumbs"
+    };
+}
+
+<style>
+    .url-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .url-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 4px solid #007bff;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .badge.primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .badge.redirect {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .alert, .info-box {
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+    }
+
+    .info-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+
+    .content-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin: 15px 0;
+    }
+
+    .article-body {
+        margin-top: 15px;
+        line-height: 1.6;
+    }
+
+    code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+    }
+</style>

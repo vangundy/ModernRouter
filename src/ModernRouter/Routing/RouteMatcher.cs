@@ -31,6 +31,7 @@ public static class RouteMatcher
 
         foreach (var entry in entries)
         {
+            // Try primary route first
             if (TryMatch(entry.Template, segments,
                     out var remaining, out var values))
             {
@@ -39,8 +40,27 @@ public static class RouteMatcher
                     Matched = entry,
                     RemainingSegments = remaining,
                     RouteValues = values,
-                    QueryParameters = queryParameters
+                    QueryParameters = queryParameters,
+                    IsAliasMatch = false
                 };
+            }
+            
+            // Try aliases if primary route didn't match
+            foreach (var alias in entry.Aliases)
+            {
+                if (TryMatch(alias.Template, segments,
+                        out var aliasRemaining, out var aliasValues))
+                {
+                    return new RouteContext
+                    {
+                        Matched = entry,
+                        RemainingSegments = aliasRemaining,
+                        RouteValues = aliasValues,
+                        QueryParameters = queryParameters,
+                        IsAliasMatch = true,
+                        MatchedAlias = alias
+                    };
+                }
             }
         }
         return new RouteContext 
