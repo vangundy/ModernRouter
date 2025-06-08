@@ -2,6 +2,20 @@
 {
     @NavigationProgress
 }
+else if (_navigationError is not null)
+{
+    @if (ErrorContent is not null)
+    {
+        @ErrorContent(_navigationError)
+    }
+    else
+    {
+        <div class="router-navigation-error">
+            <h1>Navigation Error</h1>
+            <p>@_navigationError.Message</p>
+        </div>
+    }
+}
 else if (_current?.Matched is null)
 {
     @NotFound

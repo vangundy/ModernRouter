@@ -4,110 +4,209 @@ using ModernRouter.Services;
 
 namespace ModernRouter.Components;
 
-public partial class Breadcrumbs : IDisposable
+/// <summary>
+/// Code-behind for Breadcrumbs component
+/// </summary>
+public partial class Breadcrumbs : ComponentBase, IDisposable
 {
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] private IRouteTableService RouteTableService { get; set; } = default!;
-    
-    [Parameter] public string Separator { get; set; } = "/";
-    [Parameter] public string HomeLabel { get; set; } = "Home";
-    [Parameter] public string HomeUrl { get; set; } = "/";
-    [Parameter] public RenderFragment<BreadcrumbItem>? ItemTemplate { get; set; }
-    [Parameter] public bool IncludeHome { get; set; } = true;
-    [Parameter] public Dictionary<string, string>? CustomLabels { get; set; }
-    
+    [Inject] private IBreadcrumbService BreadcrumbService { get; set; } = default!;
+
     /// <summary>
-    /// Class applied to the breadcrumbs container
+    /// Breadcrumb options configuration
+    /// </summary>
+    [Parameter] public BreadcrumbOptions Options { get; set; } = new();
+
+    /// <summary>
+    /// Custom template for rendering breadcrumb items
+    /// </summary>
+    [Parameter] public RenderFragment<BreadcrumbItem>? ItemTemplate { get; set; }
+
+    /// <summary>
+    /// Custom template for rendering separators
+    /// </summary>
+    [Parameter] public RenderFragment? SeparatorTemplate { get; set; }
+
+    /// <summary>
+    /// Custom template for rendering the toolbar
+    /// </summary>
+    [Parameter] public RenderFragment? ToolbarTemplate { get; set; }
+
+    /// <summary>
+    /// Whether to show the toolbar
+    /// </summary>
+    [Parameter] public bool ShowToolbar { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the container
     /// </summary>
     [Parameter] public string? CssClass { get; set; }
-    
-    private readonly List<BreadcrumbItem> _breadcrumbs = [];
+
+    /// <summary>
+    /// Inline styles for the container
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+
+    /// <summary>
+    /// Event fired when a breadcrumb item is clicked
+    /// </summary>
+    [Parameter] public EventCallback<BreadcrumbEventArgs> OnBreadcrumbClick { get; set; }
+
+    /// <summary>
+    /// Event fired when breadcrumbs are updated
+    /// </summary>
+    [Parameter] public EventCallback<IList<BreadcrumbItem>> OnBreadcrumbsChanged { get; set; }
+
+    private List<BreadcrumbItem> _breadcrumbs = new();
+
+    /// <summary>
+    /// Gets the current breadcrumb items
+    /// </summary>
+    public IReadOnlyList<BreadcrumbItem> Items => _breadcrumbs.AsReadOnly();
 
     protected override void OnInitialized()
     {
         NavigationManager.LocationChanged += OnLocationChanged;
+        BuildBreadcrumbs();
     }
-    
+
     protected override void OnParametersSet()
     {
         BuildBreadcrumbs();
     }
-    
+
+    /// <summary>
+    /// Manually refresh the breadcrumbs
+    /// </summary>
+    public void RefreshBreadcrumbs()
+    {
+        BuildBreadcrumbs();
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Clear all breadcrumbs
+    /// </summary>
+    public void ClearBreadcrumbs()
+    {
+        _breadcrumbs.Clear();
+        InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Add a custom breadcrumb item
+    /// </summary>
+    /// <param name="item">The breadcrumb item to add</param>
+    public void AddBreadcrumb(BreadcrumbItem item)
+    {
+        if (item == null) return;
+        
+        _breadcrumbs.Add(item);
+        InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Remove a breadcrumb item by URL
+    /// </summary>
+    /// <param name="url">The URL of the breadcrumb to remove</param>
+    public void RemoveBreadcrumb(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        
+        var itemToRemove = _breadcrumbs.FirstOrDefault(b => b.Url == url);
+        if (itemToRemove != null)
+        {
+            _breadcrumbs.Remove(itemToRemove);
+            InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         BuildBreadcrumbs();
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
-    
+
     private void BuildBreadcrumbs()
     {
-        _breadcrumbs.Clear();
-        
-        // Add home breadcrumb if configured
-        if (IncludeHome)
+        try
         {
-            _breadcrumbs.Add(new BreadcrumbItem
-            {
-                Label = HomeLabel,
-                Url = HomeUrl,
-                IsActive = false
-            });
+            var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            var newBreadcrumbs = BreadcrumbService.GenerateBreadcrumbs(path, Options);
+            
+            _breadcrumbs.Clear();
+            _breadcrumbs.AddRange(newBreadcrumbs);
+            
+            InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
         }
-
-        string path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        if (string.IsNullOrEmpty(path))
-            return;
-            
-        // Use the route table service for proper breadcrumb matching
-        var breadcrumbMatches = RouteTableService.GetBreadcrumbMatches(path);
-        
-        foreach (var match in breadcrumbMatches)
+        catch (Exception ex)
         {
-            var label = GetLabelForMatch(match);
-            
-            _breadcrumbs.Add(new BreadcrumbItem
-            {
-                Label = label,
-                Url = match.Path,
-                IsActive = match.IsActive,
-                OriginalSegment = match.Path.Split('/').LastOrDefault() ?? string.Empty
-            });
+            // Log error if logging service is available
+            Console.WriteLine($"Error building breadcrumbs: {ex.Message}");
         }
     }
-    
-    private string GetLabelForMatch(BreadcrumbRouteMatch match)
+
+    private async Task OnItemClick(BreadcrumbItem item)
     {
-        // Check for custom label first
-        if (CustomLabels != null)
+        try
         {
-            var segment = match.Path.Split('/').LastOrDefault() ?? string.Empty;
-            if (CustomLabels.TryGetValue(segment, out string? customLabel))
-                return customLabel;
+            var args = new BreadcrumbEventArgs(item);
+            await OnBreadcrumbClick.InvokeAsync(args);
+            
+            if (!args.Cancel && item.IsClickable && !string.IsNullOrEmpty(item.Url) && item.Url != "#")
+            {
+                NavigationManager.NavigateTo(item.Url);
+            }
         }
-        
-        // If this is a parameter, use the actual value if available
-        if (match.IsParameter && !string.IsNullOrEmpty(match.Label))
+        catch (Exception ex)
         {
-            return match.Label;
+            // Log error if logging service is available
+            Console.WriteLine($"Error handling breadcrumb click: {ex.Message}");
         }
-        
-        // Use the default label from the match
-        return string.IsNullOrEmpty(match.Label) ? "Unknown" : match.Label;
     }
 
-    
-    protected virtual void Dispose(bool disposing)
+    private string GetItemCssClass(BreadcrumbItem item)
     {
-        if (disposing)
-        {
-            NavigationManager.LocationChanged -= OnLocationChanged;
-        }
+        var classes = new List<string>();
+        
+        if (item.IsActive)
+            classes.Add("active");
+        if (item.IsActive && !string.IsNullOrEmpty(Options.ActiveItemCssClass))
+            classes.Add(Options.ActiveItemCssClass);
+        if (!string.IsNullOrEmpty(item.CssClass))
+            classes.Add(item.CssClass);
+        if (!item.IsClickable)
+            classes.Add("not-clickable");
+            
+        return string.Join(" ", classes);
+    }
+
+    /// <summary>
+    /// Get CSS classes for a specific breadcrumb item
+    /// </summary>
+    /// <param name="item">The breadcrumb item</param>
+    /// <returns>Combined CSS classes</returns>
+    public string GetCssClassForItem(BreadcrumbItem item)
+    {
+        return GetItemCssClass(item);
+    }
+
+    /// <summary>
+    /// Check if the breadcrumb item should be displayed
+    /// </summary>
+    /// <param name="item">The breadcrumb item</param>
+    /// <returns>True if the item should be displayed</returns>
+    public bool ShouldDisplayItem(BreadcrumbItem item)
+    {
+        return item != null && !item.IsHidden;
     }
 
     public void Dispose()
     {
-        Dispose(true);
+        NavigationManager.LocationChanged -= OnLocationChanged;
         GC.SuppressFinalize(this);
     }
 }
-
