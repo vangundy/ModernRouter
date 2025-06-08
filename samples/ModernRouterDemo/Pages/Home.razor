@@ -6,9 +6,6 @@
 <PageTitle>Home - ModernRouter Demo</PageTitle>
 
 <div class="container">
-    <!-- Enhanced Breadcrumb Component -->
-    <Breadcrumbs Options="@breadcrumbOptions" 
-                 OnBreadcrumbClick="@HandleBreadcrumbClick" />
 
     <div class="hero-section">
     <h1>🚀 ModernRouter Demo</h1>
@@ -135,30 +132,6 @@
 @code {
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
-    
-    private BreadcrumbOptions breadcrumbOptions = new()
-    {
-        HomeLabel = "🏠 Demo Home",
-        HomeUrl = "/",
-        Separator = "→",
-        MaxItems = 5,
-        AutoCollapse = true,
-        ShowIcons = true,
-        ShowDescriptions = true,
-        Animation = BreadcrumbAnimation.Fade,
-        ContainerCssClass = "demo-breadcrumbs"
-    };
-    
-    private Task HandleBreadcrumbClick(BreadcrumbEventArgs args)
-    {
-        // Example of custom breadcrumb click handling
-        if (args.Item.Label.Contains("Demo Home"))
-        {
-            Console.WriteLine($"🏠 Navigating to home: {args.Item.Url}");
-        }
-        // Don't cancel navigation - let it proceed normally
-        return Task.CompletedTask;
-    }
 }
 
 <style>

@@ -48,9 +48,11 @@ public static class RouteMatcher
             // Try aliases if primary route didn't match
             foreach (var alias in entry.Aliases)
             {
+                Console.WriteLine($"Debug: Trying alias '{alias.TemplateString}' for component {entry.Component.Name}");
                 if (TryMatch(alias.Template, segments,
                         out var aliasRemaining, out var aliasValues))
                 {
+                    Console.WriteLine($"Debug: Alias match found! '{alias.TemplateString}' -> '{entry.TemplateString}', RedirectToPrimary: {alias.RedirectToPrimary}");
                     return new RouteContext
                     {
                         Matched = entry,

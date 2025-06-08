@@ -4,8 +4,6 @@
 <PageTitle>Order Details - ModernRouter Demo</PageTitle>
 
 <div class="container">
-    <!-- Enhanced Breadcrumb Component -->
-    <Breadcrumbs Options="@breadcrumbOptions" />
 
     <div class="page-header">
         <h1>📝 Order Details</h1>
@@ -45,14 +43,4 @@
 </div>
 
 @code {
-    private BreadcrumbOptions breadcrumbOptions = new()
-    {
-        HomeLabel = "🏠 Demo Home",
-        HomeUrl = "/",
-        Separator = "→",
-        ShowIcons = true,
-        ShowDescriptions = true,
-        Animation = BreadcrumbAnimation.Slide,
-        ContainerCssClass = "page-breadcrumbs"
-    };
 }

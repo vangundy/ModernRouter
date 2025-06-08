@@ -1,0 +1,61 @@
+@using ModernRouter.Services
+@using Microsoft.AspNetCore.Components.Routing
+
+<nav aria-label="breadcrumb" 
+     class="modern-breadcrumbs hierarchical @Options.ContainerCssClass @CssClass"
+     style="@Style"
+     data-animation="@Options.Animation.ToString().ToLower()">
+    
+    <ol class="breadcrumb-list" role="list">
+        @foreach (var (item, index) in _breadcrumbs.Select((item, index) => (item, index)))
+        {
+            <li class="breadcrumb-item @GetItemCssClass(item) @Options.ItemCssClass" 
+                role="listitem"
+                aria-current="@(item.IsActive ? "page" : null)"
+                data-breadcrumb-index="@index"
+                data-breadcrumb-depth="@item.Order">
+                
+                @if (ItemTemplate != null)
+                {
+                    @ItemTemplate(item)
+                }
+                else
+                {
+                    <BreadcrumbItemRenderer Item="@item" 
+                                         Options="@Options" 
+                                         OnItemClick="@OnItemClick" />
+                }
+            </li>
+            
+            @if (!item.IsActive && index < _breadcrumbs.Count - 1)
+            {
+                <li class="breadcrumb-separator" aria-hidden="true">
+                    @if (SeparatorTemplate != null)
+                    {
+                        @SeparatorTemplate
+                    }
+                    else
+                    {
+                        @((MarkupString)Options.Separator)
+                    }
+                </li>
+            }
+        }
+    </ol>
+    
+    @if (ShowToolbar && ToolbarTemplate != null)
+    {
+        <div class="breadcrumb-toolbar">
+            @ToolbarTemplate
+        </div>
+    }
+    
+    @if (ShowHierarchyInfo && _hierarchy != null)
+    {
+        <div class="breadcrumb-hierarchy-info">
+            <small class="text-muted">
+                Hierarchy: @_hierarchy.RootNodes.Count root routes, @_hierarchy.Nodes.Count total routes
+            </small>
+        </div>
+    }
+</nav>

@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRouteTableService, RouteTableService>();
         services.AddSingleton<IRouteNameService, RouteNameService>();
         services.AddSingleton<IBreadcrumbService, BreadcrumbService>();
+        services.AddSingleton<IHierarchicalBreadcrumbService, HierarchicalBreadcrumbService>();
         services.AddSingleton<IRouteAnimationService, RouteAnimationService>();
 
         return services;

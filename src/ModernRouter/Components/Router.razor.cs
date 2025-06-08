@@ -121,12 +121,21 @@ public partial class Router
             // Handle alias redirects to primary route
             if (match.IsAliasMatch && match.MatchedAlias?.RedirectToPrimary is true)
             {
+                Console.WriteLine($"Debug: Alias match detected for redirect. Alias: {match.MatchedAlias.TemplateString}, Primary: {match.Matched?.TemplateString}");
+                
                 // Generate the primary route URL with the same parameters
                 var primaryUrl = GeneratePrimaryRouteUrl(match);
+                Console.WriteLine($"Debug: Generated primary URL: {primaryUrl}");
+                
                 if (!string.IsNullOrEmpty(primaryUrl))
                 {
+                    Console.WriteLine($"Debug: Redirecting to primary URL: {primaryUrl}");
                     Nav.NavigateTo(primaryUrl, forceLoad: false, replace: true);
                     return;
+                }
+                else
+                {
+                    Console.WriteLine("Debug: Failed to generate primary URL for redirect");
                 }
             }
 

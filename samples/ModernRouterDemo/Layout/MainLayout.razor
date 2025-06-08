@@ -1,20 +1,45 @@
 ﻿@inherits LayoutComponentBase
 @using ModernRouter.Components
 <div class="container">
-    <Breadcrumbs CssClass="my-3"
-                 Options="@breadcrumbOptions" />
+    <!-- Global Hierarchical Breadcrumbs -->
+    <HierarchicalBreadcrumbs CssClass="my-3"
+                             Options="@breadcrumbOptions"
+                             OnBreadcrumbClick="@HandleBreadcrumbClick" 
+                             ShowHierarchyInfo="@showDebugInfo" />
 
     @Body
 </div>
 
 @code {
+    // Enable for development debugging to see route hierarchy information
+    private bool showDebugInfo = false;
+
     private BreadcrumbOptions breadcrumbOptions = new()
     {
-        HomeLabel = "Dashboard",
+        HomeLabel = "🏠 Demo Home",
         HomeUrl = "/",
-        Separator = " › ",
+        Separator = " → ",
         IncludeHome = true,
+        MaxItems = 6,
+        AutoCollapse = true,
         ShowIcons = true,
-        ContainerCssClass = "main-breadcrumbs"
+        ShowDescriptions = true,
+        Animation = BreadcrumbAnimation.Fade,
+        ContainerCssClass = "global-breadcrumbs",
+        ActiveItemCssClass = "active-breadcrumb",
+        ItemCssClass = "breadcrumb-item-global"
     };
+
+    private Task HandleBreadcrumbClick(BreadcrumbEventArgs args)
+    {
+        // Global breadcrumb click handling
+        Console.WriteLine($"Global breadcrumb navigation: {args.Item.Label} → {args.Item.Url}");
+        
+        // You could add global analytics tracking here
+        // You could implement custom navigation logic here
+        // You could show loading indicators here
+        
+        // Don't cancel navigation - let it proceed normally
+        return Task.CompletedTask;
+    }
 }

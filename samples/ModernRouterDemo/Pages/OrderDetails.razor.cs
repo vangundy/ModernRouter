@@ -3,14 +3,17 @@ using ModernRouter.Routing;
 
 namespace ModernRouterDemo.Pages;
 
-[Route("details/{LineId:int}/{*Slug}")]
+[Route("orders/{Id:int}/details/{LineId:int}/{*Slug}")]
 [RouteName("OrderDetails")]
-[Breadcrumb("Order Details", 
-    Description = "Detailed information about order line items", 
+[Breadcrumb("Order Details for Order {Id}", 
+    Description = "Detailed information about line item {LineId} for order {Id}", 
     Icon = "📝",
     Order = 2)]
 public partial class OrderDetails
 {
+    [Parameter]
+    public int Id { get; set; }
+
     [Parameter]
     public int LineId { get; set; }
 
