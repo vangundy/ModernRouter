@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
+using ModernRouter.Services;
 
 namespace ModernRouter.Components;
 public partial class Outlet
 {
     [Inject] private IServiceProvider Services { get; set; } = default!;
+    [Inject] private IRouteMatchingService RouteMatchingService { get; set; } = default!;
+    [Inject] private IRouteRenderingService RouteRenderingService { get; set; } = default!;
     [CascadingParameter] private List<RouteEntry>? RouteTable { get; set; }
     [CascadingParameter] private string[]? Segments { get; set; }
     [CascadingParameter] private RouteContext RouteContext { get; set; } = default!;
@@ -21,18 +24,23 @@ public partial class Outlet
     protected override async Task OnParametersSetAsync()
     {
         if (RouteTable is null || Segments is null) return;
-        RouteContext = RouteMatcher.Match(RouteTable, string.Join('/', Segments));
+        
+        // Use the shared route matching service
+        RouteContext = RouteMatchingService.MatchRoute(RouteTable, string.Join('/', Segments));
+        
+        // Reset state
         _loaderData = null;
         _loaderException = null;
         _loading = false;
-        if (RouteContext?.Matched?.LoaderType is { } loaderType)
+        
+        // Use the shared data loading logic
+        if (RouteRenderingService.RequiresDataLoading(RouteContext))
         {
             _loading = true;
             StateHasChanged(); // Trigger re-render to show progress
             try
             {
-                var loader = (IRouteDataLoader)ActivatorUtilities.CreateInstance(Services, loaderType);
-                _loaderData = await loader.LoadAsync(RouteContext, Services, CancellationToken.None);
+                _loaderData = await RouteMatchingService.LoadRouteDataAsync(RouteContext, Services, CancellationToken.None);
             }
             catch (Exception ex)
             {

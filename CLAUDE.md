@@ -256,6 +256,23 @@ public class MyComponent : ComponentBase, IAnimationLifecycleHooks
 - `MatchRoute(path)` - Matches URL path to route definitions
 - `GetBreadcrumbMatches(path)` - Builds breadcrumb hierarchy
 
+#### **IRouteMatchingService** *(New - Consolidated)*
+**Purpose**: Shared route matching logic used by Router and Outlet components.
+
+**Key Methods**:
+- `MatchRoute(routes, path)` - Performs route matching against route entries
+- `LoadRouteDataAsync(context, services)` - Handles data loading for routes
+- `IsValidForRendering(context)` - Validates route context for rendering
+
+#### **IRouteRenderingService** *(New - Consolidated)*
+**Purpose**: Shared component rendering logic for route components.
+
+**Key Methods**:
+- `CreateComponentParameters(context)` - Creates parameter dictionary for DynamicComponent
+- `RequiresDataLoading(context)` - Checks if route needs data loading
+- `GetComponentType(context)` - Gets component type to render
+- `CreateCascadingValues(data, segments)` - Creates cascading values for child components
+
 #### **IRouteNameService**
 **Purpose**: Handles named route URL generation for type-safe navigation.
 

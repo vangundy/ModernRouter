@@ -8,8 +8,6 @@
 <PageTitle>Article View - ModernRouter Demo</PageTitle>
 
 <div class="container">
-    <!-- Breadcrumb Component -->
-    <Breadcrumbs Options="@breadcrumbOptions" />
 
     <div class="page-header">
         <h1>📰 Article View</h1>
@@ -93,16 +91,6 @@
     [Parameter] public int Id { get; set; }
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
-    private BreadcrumbOptions breadcrumbOptions = new()
-    {
-        HomeLabel = "🏠 Demo Home",
-        HomeUrl = "/",
-        Separator = "→",
-        ShowIcons = true,
-        ShowDescriptions = true,
-        Animation = BreadcrumbAnimation.Slide,
-        ContainerCssClass = "page-breadcrumbs"
-    };
 }
 
 <style>

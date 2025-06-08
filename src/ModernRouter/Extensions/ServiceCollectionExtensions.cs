@@ -24,6 +24,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRouteNameService, RouteNameService>();
         services.AddSingleton<IBreadcrumbService, BreadcrumbService>();
         services.AddSingleton<IRouteAnimationService, RouteAnimationService>();
+        
+        // Register new consolidated services
+        services.AddScoped<IRouteMatchingService, RouteMatchingService>();
+        services.AddScoped<IRouteRenderingService, RouteRenderingService>();
 
         return services;
     }

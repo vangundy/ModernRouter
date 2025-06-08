@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
+using ModernRouter.Services;
 
 namespace ModernRouter.Components;
 public partial class RouteView
 {
     [Inject] private IServiceProvider Services { get; set; } = default!;
+    [Inject] private IRouteMatchingService RouteMatchingService { get; set; } = default!;
+    [Inject] private IRouteRenderingService RouteRenderingService { get; set; } = default!;
     [Parameter] public RouteEntry RouteEntry { get; set; } = default!;
     [Parameter] public string[] RemainingSegments { get; set; } = [];
     [Parameter] public Dictionary<string, object?> RouteValues { get; set; } = [];
@@ -18,20 +21,26 @@ public partial class RouteView
 
     protected override async Task OnParametersSetAsync()
     {
+        // Reset state
         _loaderData = null;
         _loaderException = null;
         _loading = false;
-        if (RouteEntry.LoaderType is { } loaderType)
+        
+        // Create route context from parameters
+        var routeContext = new RouteContext 
+        { 
+            Matched = RouteEntry, 
+            RemainingSegments = RemainingSegments, 
+            RouteValues = RouteValues 
+        };
+        
+        // Use the shared data loading logic
+        if (RouteRenderingService.RequiresDataLoading(routeContext))
         {
             _loading = true;
             try
             {
-                var loader = (IRouteDataLoader)ActivatorUtilities.CreateInstance(Services, loaderType);
-                _loaderData = await loader.LoadAsync(
-                    new RouteContext { Matched = RouteEntry, RemainingSegments = RemainingSegments, RouteValues = RouteValues },
-                    Services,
-                    CancellationToken.None
-                );
+                _loaderData = await RouteMatchingService.LoadRouteDataAsync(routeContext, Services, CancellationToken.None);
             }
             catch (Exception ex)
             {

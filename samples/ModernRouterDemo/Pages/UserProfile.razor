@@ -9,8 +9,6 @@
 <PageTitle>User Profile - ModernRouter Demo</PageTitle>
 
 <div class="container">
-    <!-- Breadcrumb Component -->
-    <Breadcrumbs Options="@breadcrumbOptions" />
 
     <div class="page-header">
         <h1>👤 User Profile</h1>
@@ -90,16 +88,6 @@
     [CascadingParameter] private RouteContext? RouteContext { get; set; }
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
-    private readonly BreadcrumbOptions breadcrumbOptions = new()
-    {
-        HomeLabel = "🏠 Demo Home",
-        HomeUrl = "/",
-        Separator = "→",
-        ShowIcons = true,
-        ShowDescriptions = true,
-        Animation = BreadcrumbAnimation.Slide,
-        ContainerCssClass = "page-breadcrumbs"
-    };
 
     private bool IsAliasAccess => RouteContext?.IsAliasMatch == true;
     private string AccessedVia => RouteContext?.MatchedTemplate ?? "";

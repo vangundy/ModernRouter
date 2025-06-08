@@ -14,6 +14,7 @@ public partial class Router
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private IRouteTableService RouteTableService { get; set; } = default!;
     [Inject] private IRouteNameService RouteNameService { get; set; } = default!;
+    [Inject] private IRouteMatchingService RouteMatchingService { get; set; } = default!;
     [Parameter] public Assembly AppAssembly { get; set; } = Assembly.GetEntryAssembly()!;
     [Parameter] public IEnumerable<Assembly>? AdditionalAssemblies { get; set; }
     [Parameter] public RenderFragment? NotFound { get; set; }
@@ -71,7 +72,7 @@ public partial class Router
         StateHasChanged();
 
         var relative = Nav.ToBaseRelativePath(absoluteUri);
-        var match = RouteMatcher.Match(_routeTable, relative);
+        var match = RouteMatchingService.MatchRoute(_routeTable, relative);
 
         // Create animation context for route transitions
         _animationContext = new RouteAnimationContext
