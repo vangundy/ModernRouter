@@ -56,6 +56,21 @@
 </div>
 
 <div class="demo-section">
+    <h2>🎬 Animation Demo</h2>
+    <p>Explore the route transition animations with various effects:</p>
+    
+    <div class="nav-grid">
+        <div class="nav-card highlight-card">
+            <h3>✨ Animated Routes</h3>
+            <p>Experience smooth transitions between pages with animation effects</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("animated-home"))" class="btn btn-primary">
+                🎭 Animation Demo
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="demo-section">
     <h2>🎯 Route Aliases Demo</h2>
     <p>Explore the new route aliases feature with multiple URL paths leading to the same content:</p>
     
@@ -118,6 +133,9 @@
 </div>
 
 @code {
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+    
     private BreadcrumbOptions breadcrumbOptions = new()
     {
         HomeLabel = "🏠 Demo Home",
@@ -142,4 +160,22 @@
         return Task.CompletedTask;
     }
 }
+
+<style>
+    .highlight-card {
+        border: 2px solid #007bff;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+        transform: translateY(-4px);
+        transition: all 0.3s ease;
+    }
+    
+    .highlight-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2);
+    }
+    
+    .highlight-card h3 {
+        color: #007bff;
+    }
+</style>
 </div>

@@ -1,8 +1,20 @@
 ﻿@inherits LayoutComponentBase
+@using ModernRouter.Components
 <div class="container">
-    <Breadcrumbs Separator=" › "
-                 CssClass="my-3"
-                 CustomLabels="@(new Dictionary<string, string> { {"home", "Dashboard"} })" />
+    <Breadcrumbs CssClass="my-3"
+                 Options="@breadcrumbOptions" />
 
     @Body
 </div>
+
+@code {
+    private BreadcrumbOptions breadcrumbOptions = new()
+    {
+        HomeLabel = "Dashboard",
+        HomeUrl = "/",
+        Separator = " › ",
+        IncludeHome = true,
+        ShowIcons = true,
+        ContainerCssClass = "main-breadcrumbs"
+    };
+}

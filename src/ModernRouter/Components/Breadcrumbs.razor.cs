@@ -57,7 +57,7 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     /// </summary>
     [Parameter] public EventCallback<IList<BreadcrumbItem>> OnBreadcrumbsChanged { get; set; }
 
-    private List<BreadcrumbItem> _breadcrumbs = new();
+    private List<BreadcrumbItem> _breadcrumbs = [];
 
     /// <summary>
     /// Gets the current breadcrumb items
