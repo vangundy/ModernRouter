@@ -184,7 +184,7 @@ string url = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { id = 123 }
 @page "/products/{category}/{id:int}"
 @using ModernRouter.Components
 
-<EnhancedBreadcrumbs />
+<Breadcrumbs />
 <h1>Product Details</h1>
 
 @code {
@@ -227,7 +227,7 @@ ModernRouter uses a component-based architecture with these key parts:
 8. **IRouteDataLoader**: Interface for async data loaders.
 9. **IRouteTableService**: Centralized route management and breadcrumb generation.
 10. **IRouteNameService**: Named route registration and URL generation.
-11. **EnhancedBreadcrumbs**: Intelligent breadcrumb component with customizable templates.
+11. **Breadcrumbs**: Intelligent breadcrumb component with customizable templates.
 
 ## Middleware Guards
 

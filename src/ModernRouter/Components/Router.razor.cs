@@ -46,6 +46,9 @@ public partial class Router
 
     private async Task NavigateAsync(string absoluteUri, bool firstLoad)
     {
+        // Store the previous URL for potential restoration
+        var previousUrl = Nav.Uri;
+        
         // Cancel any pending navigation
         if (_currentNavigationCts is not null)
         {
@@ -73,27 +76,35 @@ public partial class Router
             // Clear any previous navigation error
             _navigationError = null;
             
+            // Check for cancellation before starting
+            _currentNavigationCts.Token.ThrowIfCancellationRequested();
+            
             // Add artificial delay to see progress indicator (remove in production)
             if (!firstLoad)
             {
-                await Task.Delay(1500);
+                await Task.Delay(1500, _currentNavigationCts.Token);
             }
+
+            // Check for cancellation again before pipeline
+            _currentNavigationCts.Token.ThrowIfCancellationRequested();
 
             var result = await InvokePipelineAsync(navContext, 0);
 
-            // Check if navigation was cancelled
+            // Final cancellation check after pipeline
             _currentNavigationCts.Token.ThrowIfCancellationRequested();
 
             if (result.Type == NavResultType.Cancel)
             {
-                // undo browser url when cancelled (except initial load)
-                if (!firstLoad) Nav.NavigateTo(Nav.Uri, forceLoad: false, replace: true);
+                // Restore browser URL when cancelled (except initial load)
+                if (!firstLoad) Nav.NavigateTo(previousUrl, forceLoad: false, replace: true);
                 return;
             }
             if (result.Type == NavResultType.Error)
             {
                 // Store the error for display in the UI
                 _navigationError = result.Exception ?? new Exception("Navigation pipeline error occurred");
+                // Also restore URL on error
+                if (!firstLoad) Nav.NavigateTo(previousUrl, forceLoad: false, replace: true);
                 return;
             }
             if (result.RedirectUrl is not null)
@@ -106,12 +117,15 @@ public partial class Router
         }
         catch (OperationCanceledException)
         {
-            // Navigation was cancelled, do nothing
+            // Navigation was cancelled - restore previous URL
+            if (!firstLoad) Nav.NavigateTo(previousUrl, forceLoad: false, replace: true);
         }
         catch (Exception ex)
         {
             // Handle any unhandled exceptions from the pipeline
             _navigationError = ex;
+            // Restore URL on unhandled error
+            if (!firstLoad) Nav.NavigateTo(previousUrl, forceLoad: false, replace: true);
         }
         finally
         {
@@ -132,12 +146,20 @@ public partial class Router
 
     private async Task<NavResult> InvokePipelineAsync(NavContext navContext, int index)
     {
+        // Check for cancellation before each middleware
+        navContext.CancellationToken.ThrowIfCancellationRequested();
+        
         if (index == _pipeline.Length)
             return NavResult.Allow();
 
         try
         {
             return await _pipeline[index].InvokeAsync(navContext, () => InvokePipelineAsync(navContext, index + 1));
+        }
+        catch (OperationCanceledException)
+        {
+            // Re-throw cancellation to be handled at the navigation level
+            throw;
         }
         catch (Exception ex)
         {

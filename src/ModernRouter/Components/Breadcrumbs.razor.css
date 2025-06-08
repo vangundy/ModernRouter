@@ -1,94 +1,222 @@
-﻿/* Breadcrumb container */
-.breadcrumbs {
+/* Modern Breadcrumb Styles */
+.modern-breadcrumbs {
+    --breadcrumb-font-size: 0.875rem;
+    --breadcrumb-line-height: 1.5;
+    --breadcrumb-padding: 1rem 0;
+    --breadcrumb-separator-color: #6b7280;
+    --breadcrumb-link-color: #3b82f6;
+    --breadcrumb-link-hover-color: #1d4ed8;
+    --breadcrumb-active-color: #374151;
+    --breadcrumb-icon-size: 1rem;
+    --breadcrumb-border-radius: 0.375rem;
+    --breadcrumb-transition: all 0.15s ease-in-out;
+    font-size: var(--breadcrumb-font-size);
+    line-height: var(--breadcrumb-line-height);
+    padding: var(--breadcrumb-padding);
+}
+
+/* Breadcrumb List */
+.breadcrumb-list {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
     list-style: none;
-    background-color: rgba(0, 0, 0, 0.03);
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
 }
 
-/* Breadcrumb item */
+/* Breadcrumb Items */
 .breadcrumb-item {
     display: flex;
     align-items: center;
-    color: var(--breadcrumb-color, #6c757d);
-    text-decoration: none;
-    background-color: transparent;
+    margin: 0;
+    padding: 0;
 }
 
-/* Breadcrumb separator */
-.breadcrumb-separator {
-    content: "/";
-    display: inline-block;
-    padding: 0 0.5rem;
-    color: var(--breadcrumb-divider-color, #6c757d);
-}
-
-/* Current/active breadcrumb */
 .breadcrumb-item.active {
-    color: var(--breadcrumb-active-color, #495057);
-    font-weight: 500;
+    font-weight: 600;
+    color: var(--breadcrumb-active-color);
 }
 
-/* Link styling */
-.breadcrumb-item a {
-    color: var(--breadcrumb-link-color, #007bff);
+.breadcrumb-item.not-clickable {
+    cursor: default;
+    opacity: 0.7;
+}
+
+/* Breadcrumb Links */
+.breadcrumb-link {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    color: var(--breadcrumb-link-color);
     text-decoration: none;
-    transition: color 0.15s ease-in-out;
+    border-radius: var(--breadcrumb-border-radius);
+    transition: var(--breadcrumb-transition);
 }
 
-.breadcrumb-item a:hover {
-    color: var(--breadcrumb-link-hover-color, #0056b3);
-    text-decoration: underline;
+.breadcrumb-link:hover {
+    color: var(--breadcrumb-link-hover-color);
+    background-color: rgba(59, 130, 246, 0.1);
+    text-decoration: none;
 }
 
-/* Responsive adjustments */
-@media (max-width: 576px) {
-    .breadcrumbs {
-        padding: 0.5rem;
-        font-size: 0.75rem;
+.breadcrumb-link:focus {
+    outline: 2px solid var(--breadcrumb-link-color);
+    outline-offset: 2px;
+}
+
+/* Static and Active Items */
+.breadcrumb-static,
+.breadcrumb-active {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.breadcrumb-active {
+    font-weight: 600;
+    color: var(--breadcrumb-active-color);
+}
+
+/* Icons */
+.breadcrumb-icon {
+    width: var(--breadcrumb-icon-size);
+    height: var(--breadcrumb-icon-size);
+    flex-shrink: 0;
+}
+
+/* Separators */
+.breadcrumb-separator {
+    display: flex;
+    align-items: center;
+    color: var(--breadcrumb-separator-color);
+    user-select: none;
+    margin: 0 0.25rem;
+}
+
+/* Collapse Indicator */
+.breadcrumb-collapse {
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--breadcrumb-border-radius);
+    transition: var(--breadcrumb-transition);
+}
+
+.breadcrumb-collapse:hover {
+    background-color: rgba(107, 114, 128, 0.1);
+}
+
+/* Toolbar */
+.breadcrumb-toolbar {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Animations */
+.modern-breadcrumbs[data-animation="fade"] .breadcrumb-item {
+    animation: breadcrumb-fade-in 0.3s ease-in-out;
+}
+
+.modern-breadcrumbs[data-animation="slide"] .breadcrumb-item {
+    animation: breadcrumb-slide-in 0.3s ease-in-out;
+}
+
+.modern-breadcrumbs[data-animation="scale"] .breadcrumb-item {
+    animation: breadcrumb-scale-in 0.3s ease-in-out;
+}
+
+/* Keyframes */
+@keyframes breadcrumb-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes breadcrumb-slide-in {
+    from {
+        transform: translateX(-1rem);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes breadcrumb-scale-in {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .modern-breadcrumbs {
+        --breadcrumb-font-size: 0.75rem;
+        --breadcrumb-padding: 0.75rem 0;
     }
     
-    /* Truncate long breadcrumbs on mobile */
-    .breadcrumb-item {
-        max-width: 120px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+    .breadcrumb-list {
+        gap: 0.25rem;
+    }
+    
+    .breadcrumb-link,
+    .breadcrumb-static,
+    .breadcrumb-active {
+        padding: 0.125rem 0.25rem;
+        gap: 0.25rem;
+    }
+    
+    /* Hide icons on very small screens */
+    .breadcrumb-icon {
+        display: none;
     }
 }
 
-/* Optional: Condensed variant */
-.breadcrumbs-condensed {
-    padding: 0.5rem;
-    background-color: transparent;
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .modern-breadcrumbs {
+        --breadcrumb-separator-color: #9ca3af;
+        --breadcrumb-link-color: #60a5fa;
+        --breadcrumb-link-hover-color: #93c5fd;
+        --breadcrumb-active-color: #f3f4f6;
+    }
+    
+    .breadcrumb-toolbar {
+        border-top-color: #374151;
+    }
 }
 
-/* Optional: Pill style variant */
-.breadcrumbs-pills .breadcrumb-item {
-    padding: 0.25rem 0.75rem;
-    border-radius: 1rem;
-    background-color: rgba(0, 0, 0, 0.05);
-    margin-right: 0.5rem;
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .modern-breadcrumbs {
+        --breadcrumb-link-color: #0000ff;
+        --breadcrumb-link-hover-color: #0000cc;
+        --breadcrumb-active-color: #000000;
+        --breadcrumb-separator-color: #000000;
+    }
+    
+    .breadcrumb-link:focus {
+        outline: 3px solid #000000;
+    }
 }
 
-.breadcrumbs-pills .breadcrumb-separator {
-    content: none;
-}
-
-.breadcrumbs-pills .breadcrumb-item.active {
-    background-color: var(--breadcrumb-active-bg, #007bff);
-    color: white;
-}
-
-/* Optional: Arrow style */
-.breadcrumbs-arrows .breadcrumb-separator {
-    content: "›";
-    font-size: 1.2em;
-    line-height: 1;
-    padding: 0 0.5rem;
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .modern-breadcrumbs * {
+        animation: none !important;
+        transition: none !important;
+    }
 }

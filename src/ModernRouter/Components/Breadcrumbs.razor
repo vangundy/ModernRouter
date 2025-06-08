@@ -1,31 +1,52 @@
-@implements IDisposable
+@using ModernRouter.Services
+@using Microsoft.AspNetCore.Components.Routing
 
-<nav aria-label="breadcrumb" class="@CssClass">
-    <ol class="breadcrumbs">
-        @foreach (var item in _breadcrumbs)
+<nav aria-label="breadcrumb" 
+     class="modern-breadcrumbs @Options.ContainerCssClass @CssClass"
+     style="@Style"
+     data-animation="@Options.Animation.ToString().ToLower()">
+    
+    <ol class="breadcrumb-list" role="list">
+        @foreach (var (item, index) in _breadcrumbs.Select((item, index) => (item, index)))
         {
-            <li class="breadcrumb-item @(item.IsActive ? "active" : "")" aria-current="@(item.IsActive ? "page" : null)">
+            <li class="breadcrumb-item @GetItemCssClass(item) @Options.ItemCssClass" 
+                role="listitem"
+                aria-current="@(item.IsActive ? "page" : null)"
+                data-breadcrumb-index="@index">
+                
                 @if (ItemTemplate != null)
                 {
                     @ItemTemplate(item)
                 }
                 else
                 {
-                    @if (item.IsActive)
-                    {
-                        @item.Label
-                    }
-                    else
-                    {
-                        <a href="@item.Url">@item.Label</a>
-                    }
+                    <BreadcrumbItemRenderer Item="@item" 
+                                         Options="@Options" 
+                                         OnItemClick="@OnItemClick" />
                 }
             </li>
             
-            @if (!item.IsActive)
+            @if (!item.IsActive && index < _breadcrumbs.Count - 1)
             {
-                <li class="breadcrumb-separator">@((MarkupString)Separator)</li>
+                <li class="breadcrumb-separator" aria-hidden="true">
+                    @if (SeparatorTemplate != null)
+                    {
+                        @SeparatorTemplate
+                    }
+                    else
+                    {
+                        @((MarkupString)Options.Separator)
+                    }
+                </li>
             }
         }
     </ol>
+    
+    @if (ShowToolbar && ToolbarTemplate != null)
+    {
+        <div class="breadcrumb-toolbar">
+            @ToolbarTemplate
+        </div>
+    }
 </nav>
+

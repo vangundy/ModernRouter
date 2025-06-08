@@ -16,6 +16,9 @@ public class AuthorizationMiddleware : INavMiddleware
 
     public async Task<NavResult> InvokeAsync(NavContext ctx, Func<Task<NavResult>> next)
     {
+        // Check for cancellation before processing
+        ctx.CancellationToken.ThrowIfCancellationRequested();
+        
         if (ctx.Match?.Matched is null)
             return await next();
 
@@ -32,6 +35,9 @@ public class AuthorizationMiddleware : INavMiddleware
         if (authorizeAttrs.Length == 0)
             return await next(); // No authorization required
 
+        // Check for cancellation before authentication check
+        ctx.CancellationToken.ThrowIfCancellationRequested();
+
         // Route requires authorization
         if (!_authService.IsAuthenticated())
         {
@@ -42,6 +48,9 @@ public class AuthorizationMiddleware : INavMiddleware
         // Check roles and policies
         foreach (var attr in authorizeAttrs)
         {
+            // Check for cancellation during policy evaluation
+            ctx.CancellationToken.ThrowIfCancellationRequested();
+            
             if (!string.IsNullOrEmpty(attr.Roles))
             {
                 var roles = attr.Roles.Split(',', StringSplitOptions.RemoveEmptyEntries);
