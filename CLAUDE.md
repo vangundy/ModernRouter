@@ -237,11 +237,13 @@ public class MyComponent : ComponentBase, IAnimationLifecycleHooks
 - Renders nested components with their own data loading
 
 #### **Breadcrumbs** (`Breadcrumbs.razor` / `Breadcrumbs.razor.cs`)
-**Purpose**: Automatically generates navigation breadcrumbs based on current route.
+**Purpose**: Automatically generates navigation breadcrumbs with hierarchical route analysis.
 
 **Key Responsibilities**:
 - Uses `IBreadcrumbService` to build breadcrumb hierarchy
+- Supports both basic and hierarchical breadcrumb generation
 - Provides customizable templates for rendering
+- Includes route hierarchy information and debugging features
 - Updates automatically on navigation changes
 
 ### Core Services

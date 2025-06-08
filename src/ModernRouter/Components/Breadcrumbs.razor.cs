@@ -5,7 +5,7 @@ using ModernRouter.Services;
 namespace ModernRouter.Components;
 
 /// <summary>
-/// Code-behind for Breadcrumbs component
+/// Enhanced breadcrumb component that uses hierarchical route analysis
 /// </summary>
 public partial class Breadcrumbs : ComponentBase, IDisposable
 {
@@ -38,6 +38,11 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     [Parameter] public bool ShowToolbar { get; set; }
 
     /// <summary>
+    /// Whether to show hierarchy debugging information
+    /// </summary>
+    [Parameter] public bool ShowHierarchyInfo { get; set; }
+
+    /// <summary>
     /// Additional CSS classes for the container
     /// </summary>
     [Parameter] public string? CssClass { get; set; }
@@ -57,12 +62,23 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     /// </summary>
     [Parameter] public EventCallback<IList<BreadcrumbItem>> OnBreadcrumbsChanged { get; set; }
 
+    /// <summary>
+    /// Event fired when the route hierarchy is built
+    /// </summary>
+    [Parameter] public EventCallback<RouteHierarchy> OnHierarchyBuilt { get; set; }
+
     private List<BreadcrumbItem> _breadcrumbs = [];
+    private RouteHierarchy? _hierarchy;
 
     /// <summary>
     /// Gets the current breadcrumb items
     /// </summary>
     public IReadOnlyList<BreadcrumbItem> Items => _breadcrumbs.AsReadOnly();
+
+    /// <summary>
+    /// Gets the current route hierarchy
+    /// </summary>
+    public RouteHierarchy? Hierarchy => _hierarchy;
 
     protected override void OnInitialized()
     {
@@ -76,10 +92,14 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// Manually refresh the breadcrumbs
+    /// Manually refresh the breadcrumbs and rebuild hierarchy
     /// </summary>
-    public void RefreshBreadcrumbs()
+    public void RefreshBreadcrumbs(bool rebuildHierarchy = false)
     {
+        if (rebuildHierarchy)
+        {
+            _hierarchy = null;
+        }
         BuildBreadcrumbs();
         InvokeAsync(StateHasChanged);
     }
@@ -124,6 +144,30 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
         }
     }
 
+    /// <summary>
+    /// Get debugging information about the current hierarchy
+    /// </summary>
+    /// <returns>Hierarchy information</returns>
+    public string GetHierarchyDebugInfo()
+    {
+        if (_hierarchy == null)
+            return "No hierarchy available";
+
+        var info = new List<string>
+        {
+            $"Root nodes: {_hierarchy.RootNodes.Count}",
+            $"Total nodes: {_hierarchy.Nodes.Count}"
+        };
+
+        foreach (var rootNode in _hierarchy.RootNodes)
+        {
+            info.Add($"Root: {rootNode.Route.TemplateString} (depth: {rootNode.Depth})");
+            AddChildrenInfo(rootNode, info, 1);
+        }
+
+        return string.Join("\n", info);
+    }
+
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         BuildBreadcrumbs();
@@ -135,17 +179,24 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
         try
         {
             var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-            var newBreadcrumbs = BreadcrumbService.GenerateBreadcrumbs(path, Options);
+            var newBreadcrumbs = BreadcrumbService.GenerateHierarchicalBreadcrumbs(path, Options);
             
             _breadcrumbs.Clear();
             _breadcrumbs.AddRange(newBreadcrumbs);
+            
+            // Update hierarchy reference and fire event if this is the first time
+            if (_hierarchy == null && BreadcrumbService.CurrentHierarchy != null)
+            {
+                _hierarchy = BreadcrumbService.CurrentHierarchy;
+                InvokeAsync(() => OnHierarchyBuilt.InvokeAsync(_hierarchy));
+            }
             
             InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
         }
         catch (Exception ex)
         {
             // Log error if logging service is available
-            Console.WriteLine($"Error building breadcrumbs: {ex.Message}");
+            Console.WriteLine($"Error building hierarchical breadcrumbs: {ex.Message}");
         }
     }
 
@@ -180,8 +231,21 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
             classes.Add(item.CssClass);
         if (!item.IsClickable)
             classes.Add("not-clickable");
+        
+        // Add hierarchy-specific classes
+        classes.Add($"breadcrumb-depth-{item.Order}");
             
         return string.Join(" ", classes);
+    }
+
+    private static void AddChildrenInfo(RouteNode node, List<string> info, int indent)
+    {
+        var prefix = new string(' ', indent * 2);
+        foreach (var child in node.Children)
+        {
+            info.Add($"{prefix}- {child.Route.TemplateString} (depth: {child.Depth})");
+            AddChildrenInfo(child, info, indent + 1);
+        }
     }
 
     /// <summary>

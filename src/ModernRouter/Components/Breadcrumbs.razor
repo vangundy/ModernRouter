@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Routing
 
 <nav aria-label="breadcrumb" 
-     class="modern-breadcrumbs @Options.ContainerCssClass @CssClass"
+     class="modern-breadcrumbs hierarchical @Options.ContainerCssClass @CssClass"
      style="@Style"
      data-animation="@Options.Animation.ToString().ToLower()">
     
@@ -12,7 +12,8 @@
             <li class="breadcrumb-item @GetItemCssClass(item) @Options.ItemCssClass" 
                 role="listitem"
                 aria-current="@(item.IsActive ? "page" : null)"
-                data-breadcrumb-index="@index">
+                data-breadcrumb-index="@index"
+                data-breadcrumb-depth="@item.Order">
                 
                 @if (ItemTemplate != null)
                 {
@@ -48,5 +49,13 @@
             @ToolbarTemplate
         </div>
     }
+    
+    @if (ShowHierarchyInfo && _hierarchy != null)
+    {
+        <div class="breadcrumb-hierarchy-info">
+            <small class="text-muted">
+                Hierarchy: @_hierarchy.RootNodes.Count root routes, @_hierarchy.Nodes.Count total routes
+            </small>
+        </div>
+    }
 </nav>
-
