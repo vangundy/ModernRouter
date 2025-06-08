@@ -1,0 +1,28 @@
+﻿<Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(Client._Imports).Assembly }">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+@* <LayoutView Layout="@typeof(Layout.MainLayout)">
+    <ModernRouter.Components.Router AppAssembly="@typeof(Program).Assembly">
+        <NotFound>
+            <h1>¯\_(ツ)_/¯  Not found</h1>
+        </NotFound>
+        <ErrorContent Context="error">
+            <div class="error-container">
+                <h2>An error occurred</h2>
+                <p>@error.Message</p>
+                
+            </div>
+        </ErrorContent>
+        <NavigationProgress>
+            <div class="navigation-progress">
+                <div class="progress-bar">
+                    <div class="progress-indicator"></div>
+                </div>
+                <p>Loading...</p>
+            </div>
+        </NavigationProgress>
+    </ModernRouter.Components.Router>
+</LayoutView> *@
