@@ -1,0 +1,90 @@
+@page "/animated-home"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("fadeIn", "fadeOut")]
+@attribute [RouteName("AnimatedHome")]
+
+<h1>Animated Home Page</h1>
+
+<div class="demo-content">
+    <p>This page demonstrates route animations in ModernRouter!</p>
+    
+    <div class="animation-demo-grid">
+        <div class="demo-card">
+            <h3>Fade Animation</h3>
+            <p>This page uses fadeIn/fadeOut animations.</p>
+            <NavLink href="/animated-products" class="btn btn-primary">Go to Products (Slide)</NavLink>
+        </div>
+        
+        <div class="demo-card">
+            <h3>Scale Animation</h3>
+            <p>Try the user profile page for scale animations.</p>
+            <NavLink href="/animated-profile/123" class="btn btn-secondary">Go to Profile (Scale)</NavLink>
+        </div>
+        
+        <div class="demo-card">
+            <h3>Page Transition</h3>
+            <p>Experience smooth page transitions.</p>
+            <NavLink href="/animated-about" class="btn btn-success">Go to About (Page Transition)</NavLink>
+        </div>
+    </div>
+</div>
+
+<style>
+    .demo-content {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .animation-demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .demo-card {
+        padding: 1.5rem;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f9f9f9;
+        text-align: center;
+    }
+    
+    .demo-card h3 {
+        margin-top: 0;
+        color: #333;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        margin: 0.5rem;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn:hover {
+        opacity: 0.9;
+    }
+</style>
+
+@code {
+    
+}

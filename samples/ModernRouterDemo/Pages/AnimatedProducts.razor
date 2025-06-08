@@ -1,0 +1,122 @@
+@page "/animated-products"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("slideLeft", "slideRight")]
+@attribute [RouteName("AnimatedProducts")]
+
+<h1>Animated Products Page</h1>
+
+<div class="demo-content">
+    <p>This page demonstrates slide animations! Navigate between pages to see the smooth transitions.</p>
+    
+    <div class="products-grid">
+        <div class="product-card">
+            <h3>Product 1</h3>
+            <p>Amazing product with great features</p>
+            <div class="price">$29.99</div>
+            <NavLink href="/animated-product/1" class="btn btn-primary">View Details</NavLink>
+        </div>
+        
+        <div class="product-card">
+            <h3>Product 2</h3>
+            <p>Another excellent choice for customers</p>
+            <div class="price">$39.99</div>
+            <NavLink href="/animated-product/2" class="btn btn-primary">View Details</NavLink>
+        </div>
+        
+        <div class="product-card">
+            <h3>Product 3</h3>
+            <p>Premium quality at affordable price</p>
+            <div class="price">$49.99</div>
+            <NavLink href="/animated-product/3" class="btn btn-primary">View Details</NavLink>
+        </div>
+    </div>
+    
+    <div class="navigation-actions">
+        <NavLink href="/animated-home" class="btn btn-secondary">← Back to Home</NavLink>
+        <NavLink href="/animated-profile/456" class="btn btn-success">Go to Profile →</NavLink>
+    </div>
+</div>
+
+<style>
+    .demo-content {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .product-card {
+        padding: 2rem;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    
+    .product-card h3 {
+        margin-top: 0;
+        color: #333;
+        font-size: 1.5rem;
+    }
+    
+    .price {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+        margin: 1rem 0;
+    }
+    
+    .navigation-actions {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+</style>
+
+@code {
+    
+}

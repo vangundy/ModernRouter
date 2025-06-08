@@ -12,5 +12,10 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 //builder.Services.AddScoped<INavMiddleware, AnalyticsTap>();
 //builder.Services.AddScoped<INavMiddleware, AuthGuard>();
 //builder.Services.AddScoped<INavMiddleware, UnsavedGuard>();
-builder.Services.AddModernRouter();
+builder.Services.AddModernRouterWithAnimations(options =>
+{
+    options.EnableAnimations = true;
+    options.DefaultDuration = 300;
+    options.RespectReducedMotion = true;
+});
 await builder.Build().RunAsync();

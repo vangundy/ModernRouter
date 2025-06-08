@@ -1,0 +1,270 @@
+@page "/animated-product/{id:int}"
+@using ModernRouter.Animations
+@attribute [RouteAnimation("zoomIn", "zoomOut")]
+@attribute [RouteName("AnimatedProductDetails")]
+
+<h1>Product Details</h1>
+
+<div class="demo-content">
+    <div class="product-hero">
+        <div class="product-image">
+            <div class="image-placeholder">
+                📦
+            </div>
+        </div>
+        <div class="product-info">
+            <h2>Product @Id</h2>
+            <div class="product-rating">
+                ⭐⭐⭐⭐⭐ <span>(4.8/5)</span>
+            </div>
+            <div class="product-price">$@((Id * 10 + 19).ToString("F2"))</div>
+            <p class="product-description">
+                This is a detailed view of product @Id showcasing the zoom-in and zoom-out animation effects. 
+                The page smoothly zooms in when entering and zooms out when leaving, creating an engaging 
+                user experience.
+            </p>
+            <div class="product-actions">
+                <button class="btn btn-primary btn-large">Add to Cart</button>
+                <button class="btn btn-secondary">Add to Wishlist</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="product-details">
+        <div class="detail-section">
+            <h3>Features</h3>
+            <ul class="feature-list">
+                <li>High-quality materials and construction</li>
+                <li>Modern design with attention to detail</li>
+                <li>Excellent value for money</li>
+                <li>Satisfaction guaranteed</li>
+                <li>Fast and reliable shipping</li>
+            </ul>
+        </div>
+        
+        <div class="detail-section">
+            <h3>Specifications</h3>
+            <div class="spec-grid">
+                <div class="spec-item">
+                    <strong>SKU:</strong> PROD-@Id.ToString("D4")
+                </div>
+                <div class="spec-item">
+                    <strong>Weight:</strong> @(Id * 0.5 + 1)kg
+                </div>
+                <div class="spec-item">
+                    <strong>Dimensions:</strong> @(Id * 2 + 10) x @(Id * 1.5 + 8) x @(Id + 5) cm
+                </div>
+                <div class="spec-item">
+                    <strong>Warranty:</strong> @(Id + 1) years
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navigation-actions">
+        <NavLink href="/animated-products" class="btn btn-secondary">← Back to Products</NavLink>
+        <NavLink href="/animated-home" class="btn btn-primary">Home Page →</NavLink>
+    </div>
+</div>
+
+<style>
+    .demo-content {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .product-hero {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 3rem;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid #eee;
+    }
+    
+    .product-image {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .image-placeholder {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
+        color: white;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    
+    .product-info h2 {
+        margin: 0 0 1rem 0;
+        font-size: 2.5rem;
+        color: #333;
+    }
+    
+    .product-rating {
+        margin: 0 0 1rem 0;
+        font-size: 1.1rem;
+    }
+    
+    .product-rating span {
+        color: #666;
+        margin-left: 0.5rem;
+    }
+    
+    .product-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+        margin: 0 0 1.5rem 0;
+    }
+    
+    .product-description {
+        line-height: 1.6;
+        color: #666;
+        margin: 0 0 2rem 0;
+    }
+    
+    .product-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .product-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        margin: 3rem 0;
+    }
+    
+    .detail-section h3 {
+        margin: 0 0 1.5rem 0;
+        color: #333;
+        font-size: 1.5rem;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+    }
+    
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .feature-list li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    .feature-list li:before {
+        content: "✓";
+        position: absolute;
+        left: 0;
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .feature-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .spec-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .spec-item {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 3px solid #007bff;
+    }
+    
+    .spec-item strong {
+        color: #333;
+    }
+    
+    .navigation-actions {
+        text-align: center;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.2s;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-large {
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+    }
+    
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    @media (max-width: 768px) {
+        .demo-content {
+            padding: 1rem;
+        }
+        
+        .product-hero {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            text-align: center;
+        }
+        
+        .image-placeholder {
+            width: 150px;
+            height: 150px;
+            font-size: 3rem;
+        }
+        
+        .product-info h2 {
+            font-size: 2rem;
+        }
+        
+        .product-details {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        .product-actions {
+            justify-content: center;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
