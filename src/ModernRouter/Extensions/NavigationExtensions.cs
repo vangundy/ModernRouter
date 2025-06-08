@@ -1,14 +1,17 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Routing;
 using ModernRouter.Services;
 
 namespace ModernRouter.Extensions;
 
 /// <summary>
-/// Extension methods for NavigationManager to work with query parameters
+/// Extension methods for NavigationManager to work with query parameters and named routes
 /// </summary>
 public static class NavigationExtensions
 {
+    #region Query Parameter Extensions
+
     /// <summary>
     /// Gets the query parameters from the current URI
     /// </summary>
@@ -115,9 +118,9 @@ public static class NavigationExtensions
     /// <param name="forceLoad">Whether to force load the page</param>
     /// <param name="replace">Whether to replace the current entry in history</param>
     public static void NavigateToRoute(this NavigationManager navigationManager, string routeTemplate, 
-        Dictionary<string, object?> routeValues, bool forceLoad = false, bool replace = false)
+        object routeValues, bool forceLoad = false, bool replace = false)
     {
-        NavigateToRoute(navigationManager, routeTemplate, routeValues, null, forceLoad, replace);
+        NavigateToRoute(navigationManager, routeTemplate, AnonymousObjectToDictionary(routeValues), null, forceLoad, replace);
     }
 
     /// <summary>
@@ -228,7 +231,9 @@ public static class NavigationExtensions
         navigationManager.NavigateWithQuery(new QueryParameters(), forceLoad, replace);
     }
 
-    // Named Route Navigation Methods
+    #endregion
+
+    #region Named Route Extensions
 
     /// <summary>
     /// Navigates to a named route with parameters
@@ -324,4 +329,100 @@ public static class NavigationExtensions
     {
         return routeNameService.TryGenerateUrl(routeName, routeValues, out url, validateParameters);
     }
+
+    /// <summary>
+    /// Navigates to a named route with optional parameters (shorter syntax)
+    /// </summary>
+    /// <param name="nav">Navigation manager instance</param>
+    /// <param name="routeNames">Route name service</param>
+    /// <param name="routeName">Name of the route to navigate to</param>
+    /// <param name="parameters">Optional parameters for the route</param>
+    public static void NavigateTo(this NavigationManager nav, 
+        IRouteNameService routeNames, string routeName, object? parameters = null)
+    {
+        nav.NavigateToNamedRoute(routeNames, routeName, parameters);
+    }
+
+    /// <summary>
+    /// Gets the URL for a named route with optional parameters (shorter syntax)
+    /// </summary>
+    /// <param name="nav">Navigation manager instance</param>
+    /// <param name="routeNames">Route name service</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="parameters">Optional parameters for the route</param>
+    /// <returns>Generated URL for the named route</returns>
+    public static string GetUrl(this NavigationManager nav,
+        IRouteNameService routeNames, string routeName, object? parameters = null)
+    {
+        return nav.GetUrlForNamedRoute(routeNames, routeName, parameters);
+    }
+
+    /// <summary>
+    /// Navigates to a named route with optional parameters (direct extension on IRouteNameService)
+    /// </summary>
+    /// <param name="routeNames">Route name service</param>
+    /// <param name="routeName">Name of the route to navigate to</param>
+    /// <param name="parameters">Optional parameters for the route</param>
+    public static void NavigateTo(this IRouteNameService routeNames, 
+        string routeName, object? parameters = null)
+    {
+        var nav = ServiceProviderHelper.GetRequiredService<NavigationManager>();
+        nav.NavigateToNamedRoute(routeNames, routeName, parameters);
+    }
+
+    /// <summary>
+    /// Gets the URL for a named route with optional parameters (direct extension on IRouteNameService)
+    /// </summary>
+    /// <param name="routeNames">Route name service</param>
+    /// <param name="routeName">Name of the route</param>
+    /// <param name="parameters">Optional parameters for the route</param>
+    /// <returns>Generated URL for the named route</returns>
+    public static string GetUrl(this IRouteNameService routeNames,
+        string routeName, object? parameters = null)
+    {
+        var nav = ServiceProviderHelper.GetRequiredService<NavigationManager>();
+        return nav.GetUrlForNamedRoute(routeNames, routeName, parameters);
+    }
+
+    /// <summary>
+    /// Navigates to a named route, replacing the current history entry
+    /// </summary>
+    /// <param name="nav">Navigation manager instance</param>
+    /// <param name="routeNames">Route name service</param>
+    /// <param name="routeName">Name of the route to navigate to</param>
+    /// <param name="parameters">Optional parameters for the route</param>
+    public static void ReplaceWith(this NavigationManager nav,
+        IRouteNameService routeNames, string routeName, object? parameters = null)
+    {
+        var url = nav.GetUrlForNamedRoute(routeNames, routeName, parameters);
+        nav.NavigateTo(url, forceLoad: false, replace: true);
+    }
+
+    /// <summary>
+    /// Refreshes the current route
+    /// </summary>
+    /// <param name="nav">Navigation manager instance</param>
+    public static void RefreshCurrent(this NavigationManager nav)
+    {
+        nav.NavigateTo(nav.Uri, forceLoad: false, replace: true);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static Dictionary<string, object?> AnonymousObjectToDictionary(object obj)
+    {
+        var dictionary = new Dictionary<string, object?>();
+        if (obj == null) return dictionary;
+        
+        foreach (var prop in obj.GetType().GetProperties())
+        {
+            dictionary[prop.Name] = prop.GetValue(obj);
+        }
+        
+        return dictionary;
+    }
+
+    #endregion
 }

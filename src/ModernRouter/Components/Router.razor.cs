@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using ModernRouter.Animations;
+using ModernRouter.Extensions;
 using ModernRouter.Routing;
 using ModernRouter.Services;
 using System.Reflection;
@@ -29,6 +30,9 @@ public partial class Router
 
     async protected override Task OnInitializedAsync()
     {
+        // Initialize service helper for static access
+        ServiceProviderHelper.Initialize(Services);
+        
         var assemblies = new List<Assembly> { AppAssembly };
         if (AdditionalAssemblies is not null) assemblies.AddRange(AdditionalAssemblies);
         _routeTable = RouteTableFactory.Build(assemblies);
