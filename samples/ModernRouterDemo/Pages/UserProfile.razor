@@ -90,7 +90,7 @@
     [CascadingParameter] private RouteContext? RouteContext { get; set; }
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
 
-    private BreadcrumbOptions breadcrumbOptions = new()
+    private readonly BreadcrumbOptions breadcrumbOptions = new()
     {
         HomeLabel = "🏠 Demo Home",
         HomeUrl = "/",

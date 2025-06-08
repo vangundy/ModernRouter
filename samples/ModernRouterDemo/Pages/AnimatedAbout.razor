@@ -1,5 +1,7 @@
 @page "/animated-about"
+@using Microsoft.AspNetCore.Components.Routing
 @using ModernRouter.Animations
+@using ModernRouter.Routing
 @attribute [RouteAnimation("pageTransition", Duration = 250)]
 @attribute [RouteName("AnimatedAbout")]
 
@@ -189,7 +191,7 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
     
-    @media (max-width: 768px) {
+    @@media (max-width: 768px) {
         .demo-content {
             padding: 1rem;
         }

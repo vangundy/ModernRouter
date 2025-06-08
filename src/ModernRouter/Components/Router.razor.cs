@@ -39,7 +39,7 @@ public partial class Router
         // Register named routes
         RegisterNamedRoutes();
 
-        _pipeline = Services.GetServices<INavMiddleware>().ToArray();
+        _pipeline = [.. Services.GetServices<INavMiddleware>()];
 
         await NavigateAsync(Nav.Uri, firstLoad: true);
         Nav.LocationChanged += async (_, e) =>
@@ -93,15 +93,6 @@ public partial class Router
             // Check for cancellation before starting
             _currentNavigationCts.Token.ThrowIfCancellationRequested();
             
-            // Add artificial delay to see progress indicator (remove in production)
-            if (!firstLoad)
-            {
-                await Task.Delay(1500, _currentNavigationCts.Token);
-            }
-
-            // Check for cancellation again before pipeline
-            _currentNavigationCts.Token.ThrowIfCancellationRequested();
-
             var result = await InvokePipelineAsync(navContext, 0);
 
             // Final cancellation check after pipeline
@@ -206,7 +197,7 @@ public partial class Router
         }
     }
 
-    private string GeneratePrimaryRouteUrl(RouteContext routeContext)
+    private static string GeneratePrimaryRouteUrl(RouteContext routeContext)
     {
         if (routeContext.Matched == null)
             return string.Empty;
