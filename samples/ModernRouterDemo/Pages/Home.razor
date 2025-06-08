@@ -55,6 +55,46 @@
     </div>
 </div>
 
+<div class="demo-section">
+    <h2>🎯 Route Aliases Demo</h2>
+    <p>Explore the new route aliases feature with multiple URL paths leading to the same content:</p>
+    
+    <div class="nav-grid">
+        <div class="nav-card">
+            <h3>👤 User Profile Aliases</h3>
+            <p>Multiple ways to access user profiles</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("users/123"))" class="btn btn-primary">
+                🔗 /users/123 (Primary)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("profile/123"))" class="btn btn-outline">
+                🔗 /profile/123 (Alias)
+            </button>
+        </div>
+        
+        <div class="nav-card">
+            <h3>📰 Article Redirects</h3>
+            <p>Legacy URLs that redirect to canonical paths</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("articles/42"))" class="btn btn-primary">
+                🔗 /articles/42 (Canonical)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("posts/42"))" class="btn btn-warning">
+                🔗 /posts/42 (Redirects)
+            </button>
+        </div>
+        
+        <div class="nav-card">
+            <h3>🔗 Short URLs</h3>
+            <p>Convenient short aliases for common paths</p>
+            <button @onclick="@(() => NavigationManager.NavigateTo("u/456"))" class="btn btn-success">
+                🔗 /u/456 (Short Alias)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("blog/789"))" class="btn btn-warning">
+                🔗 /blog/789 (Legacy)
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="features-section">
     <h2>✨ Breadcrumb Features</h2>
     <div class="features-grid">

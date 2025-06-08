@@ -1,0 +1,160 @@
+@page "/users/{id:int}"
+@attribute [RouteAlias("/profile/{id:int}")]
+@attribute [RouteAlias("/member/{id:int}")]
+@attribute [RouteAlias("/u/{id:int}", Priority = 10)]
+@attribute [RouteName("UserProfile")]
+@using ModernRouter.Components
+@using ModernRouter.Routing
+
+<PageTitle>User Profile - ModernRouter Demo</PageTitle>
+
+<div class="container">
+    <!-- Breadcrumb Component -->
+    <Breadcrumbs Options="@breadcrumbOptions" />
+
+    <div class="page-header">
+        <h1>👤 User Profile</h1>
+        <p class="page-description">User ID: @Id</p>
+        @if (IsAliasAccess)
+        {
+            <div class="alert alert-info">
+                <strong>🔗 Accessed via alias:</strong> @AccessedVia
+                <br />
+                <strong>📍 Canonical URL:</strong> /users/@Id
+            </div>
+        }
+    </div>
+
+    <div class="demo-section">
+        <h2>🎯 Route Alias Demo</h2>
+        <p>This page demonstrates route aliases. You can access this same page using multiple URLs:</p>
+        
+        <div class="url-list">
+            <div class="url-item">
+                <strong>Primary Route:</strong> 
+                <a href="/users/@Id">/users/@Id</a>
+                <span class="badge primary">Primary</span>
+            </div>
+            <div class="url-item">
+                <strong>Profile Alias:</strong> 
+                <a href="/profile/@Id">/profile/@Id</a>
+                <span class="badge alias">Alias</span>
+            </div>
+            <div class="url-item">
+                <strong>Member Alias:</strong> 
+                <a href="/member/@Id">/member/@Id</a>
+                <span class="badge alias">Alias</span>
+            </div>
+            <div class="url-item">
+                <strong>Short Alias:</strong> 
+                <a href="/u/@Id">/u/@Id</a>
+                <span class="badge alias high-priority">High Priority Alias</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="user-info">
+        <h3>👤 User Information</h3>
+        <div class="info-card">
+            <p><strong>User ID:</strong> @Id</p>
+            <p><strong>Username:</strong> user@Id</p>
+            <p><strong>Display Name:</strong> User @Id</p>
+            <p><strong>Role:</strong> @(Id == 1 ? "Administrator" : Id == 2 ? "Moderator" : "Member")</p>
+        </div>
+    </div>
+
+    <div class="action-section">
+        <h3>🔗 Navigation Examples</h3>
+        <div class="action-grid">
+            <button @onclick="@(() => NavigationManager.NavigateTo("/users/1"))" class="btn btn-primary">
+                👤 User 1 (Primary)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/profile/2"))" class="btn btn-outline">
+                👤 User 2 (Profile Alias)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/member/3"))" class="btn btn-outline">
+                👤 User 3 (Member Alias)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/u/4"))" class="btn btn-outline">
+                👤 User 4 (Short Alias)
+            </button>
+            <button @onclick="@(() => NavigationManager.NavigateTo("/"))" class="btn btn-secondary">
+                🏠 Back to Home
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [CascadingParameter] private RouteContext? RouteContext { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private BreadcrumbOptions breadcrumbOptions = new()
+    {
+        HomeLabel = "🏠 Demo Home",
+        HomeUrl = "/",
+        Separator = "→",
+        ShowIcons = true,
+        ShowDescriptions = true,
+        Animation = BreadcrumbAnimation.Slide,
+        ContainerCssClass = "page-breadcrumbs"
+    };
+
+    private bool IsAliasAccess => RouteContext?.IsAliasMatch == true;
+    private string AccessedVia => RouteContext?.MatchedTemplate ?? "";
+}
+
+<style>
+    .url-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .url-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border-left: 4px solid #007bff;
+    }
+
+    .badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .badge.primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .badge.alias {
+        background: #6c757d;
+        color: white;
+    }
+
+    .badge.high-priority {
+        background: #28a745;
+        color: white;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        color: #0c5460;
+    }
+</style>

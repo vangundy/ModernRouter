@@ -29,6 +29,8 @@ internal static class RouteTableFactory
                 {
                     // Store the template string for URL generation
                     TemplateString = attr.Template,
+                    // Process route aliases
+                    Aliases = ProcessAliases(type),
                     // Store all attributes from the component
                     Attributes = [.. type.GetCustomAttributes()]
                 }))
@@ -37,6 +39,40 @@ internal static class RouteTableFactory
         // longest template first
         routes.Sort((a, b) => b.Template.Length.CompareTo(a.Template.Length));
         return routes;
+    }
+
+    private static IReadOnlyList<RouteAlias> ProcessAliases(Type componentType)
+    {
+        var aliasAttributes = componentType.GetCustomAttributes<RouteAliasAttribute>();
+        if (!aliasAttributes.Any())
+            return [];
+
+        var aliases = new List<RouteAlias>();
+        
+        foreach (var aliasAttr in aliasAttributes)
+        {
+            try
+            {
+                var alias = new RouteAlias
+                {
+                    Template = ParseTemplate(aliasAttr.Template),
+                    TemplateString = aliasAttr.Template,
+                    RedirectToPrimary = aliasAttr.RedirectToPrimary,
+                    Priority = aliasAttr.Priority
+                };
+                aliases.Add(alias);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the entire route building process
+                Console.WriteLine($"Warning: Failed to parse route alias '{aliasAttr.Template}' for component {componentType.Name}: {ex.Message}");
+            }
+        }
+
+        // Sort by priority (higher priority first)
+        aliases.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+        
+        return aliases.AsReadOnly();
     }
 
     private static RouteSegment[] ParseTemplate(string template)

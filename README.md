@@ -79,6 +79,12 @@ ModernRouter provides an advanced, hierarchical routing system designed to handl
 - Loader result is cascaded to the component and all its descendants via [CascadingParameter]
 - Enables efficient data fetching and delivery for each route and nested outlet
 
+### Route Aliases
+- **Multiple URL Paths**: Define alternative URLs that map to the same component
+- **Backward Compatibility**: Maintain old URLs while migrating to new structures
+- **Redirect Support**: Automatically redirect aliases to canonical URLs
+- **Priority System**: Control which alias takes precedence in matching
+
 ### Enhanced Breadcrumbs
 - **Intelligent Matching**: Smart breadcrumb generation based on route structure
 - **Customizable Templates**: Flexible item and separator templates
@@ -166,6 +172,34 @@ Nav.NavigateToNamedRoute(RouteNames, "UserProfile", new { id = 123 });
 string url = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { id = 123 });
 ```
 
+#### **Named Routes with Aliases**
+
+Named routes always generate primary URLs, ensuring consistency:
+
+```razor
+@page "/users/{id:int}"
+@attribute [RouteAlias("/profile/{id:int}")]
+@attribute [RouteAlias("/u/{id:int}")]
+@attribute [RouteName("UserProfile")]
+```
+
+```csharp
+// This always generates "/users/123", never aliases
+string canonicalUrl = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { id = 123 });
+// Result: "/users/123" (primary route)
+
+// But users can still access via aliases:
+// - /profile/123 (works)
+// - /u/123 (works)
+// - All lead to the same component
+```
+
+**Benefits:**
+- **Consistent URL generation**: Always produces canonical URLs
+- **SEO-friendly**: Prevents duplicate content issues
+- **Predictable behavior**: Named routes unaffected by aliases
+- **Analytics tracking**: Easy to distinguish primary vs alias usage
+
 ### Using Nested Routes
 
 ```razor
@@ -177,6 +211,342 @@ string url = Nav.GetUrlForNamedRoute(RouteNames, "UserProfile", new { id = 123 }
 </nav>
 <Outlet />
 ```
+
+### Route Aliases
+
+Route aliases allow you to define multiple URL paths that lead to the same component, enabling powerful scenarios for real-world applications.
+
+#### **Basic Usage**
+
+```razor
+@page "/users/{id:int}"
+@attribute [RouteAlias("/profile/{id:int}")]
+@attribute [RouteAlias("/member/{id:int}")]
+@attribute [RouteAlias("/u/{id:int}", Priority = 10)]
+@attribute [RouteName("UserProfile")]
+
+<h1>User Profile: @Id</h1>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
+```
+
+#### **Redirect-to-Primary Aliases**
+
+```razor
+@page "/articles/{id:int}"
+@attribute [RouteAlias("/posts/{id:int}", RedirectToPrimary = true)]
+@attribute [RouteAlias("/blog/{id:int}", RedirectToPrimary = true)]
+
+<h1>Article @Id</h1>
+<!-- Legacy URLs /posts/{id} and /blog/{id} redirect to /articles/{id} -->
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
+```
+
+## Route Aliases - Real-World Use Cases
+
+### **1. URL Migration & Legacy Support**
+
+When restructuring your application's URLs, route aliases provide seamless backward compatibility:
+
+```razor
+// Scenario: Migrating from /admin/users to /dashboard/users
+@page "/dashboard/users/{id:int}"
+@attribute [RouteAlias("/admin/users/{id:int}", RedirectToPrimary = true)]
+@attribute [RouteName("UserManagement")]
+
+<h1>User Management</h1>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
+```
+
+**Benefits:**
+- Old bookmarks continue working
+- External links remain valid
+- SEO ranking preserved through redirects
+- Gradual migration without breaking changes
+
+### **2. SEO Optimization & Marketing**
+
+Create multiple SEO-friendly URLs for the same content:
+
+```razor
+@page "/services/web-development"
+@attribute [RouteAlias("/web-design")]
+@attribute [RouteAlias("/website-creation")]
+@attribute [RouteAlias("/custom-web-solutions")]
+
+<h1>Web Development Services</h1>
+```
+
+**Use Cases:**
+- **Keyword targeting**: Different URLs target different search terms
+- **Campaign URLs**: Marketing campaigns can use branded short URLs
+- **A/B testing**: Test which URL structure performs better
+- **Regional variations**: Different terms for different markets
+
+### **3. User-Friendly Shortcuts**
+
+Provide convenient shortcuts alongside formal URLs:
+
+```razor
+@page "/user/settings/account/profile"
+@attribute [RouteAlias("/profile")]
+@attribute [RouteAlias("/me")]
+@attribute [RouteAlias("/account")]
+
+<h1>User Profile Settings</h1>
+```
+
+**Benefits:**
+- Easier to remember and type
+- Better user experience
+- Reduced cognitive load
+- Faster navigation for power users
+
+### **4. Internationalization Support**
+
+Support multiple languages in URLs:
+
+```razor
+@page "/en/about-us"
+@attribute [RouteAlias("/about")]              <!-- Default English -->
+@attribute [RouteAlias("/es/acerca-de")]       <!-- Spanish -->
+@attribute [RouteAlias("/fr/a-propos")]        <!-- French -->
+@attribute [RouteAlias("/de/uber-uns")]        <!-- German -->
+
+<h1>About Us</h1>
+```
+
+### **5. API Versioning**
+
+Maintain multiple API versions while defaulting to the latest:
+
+```razor
+@page "/api/v3/products/{id:int}"
+@attribute [RouteAlias("/api/products/{id:int}")]        <!-- Default to latest -->
+@attribute [RouteAlias("/api/v2/products/{id:int}", RedirectToPrimary = true)]  <!-- Upgrade v2 -->
+
+<h1>Product API</h1>
+
+@code {
+    [Parameter] public int Id { get; set; }
+}
+```
+
+## Priority System - Solving Route Conflicts
+
+The priority system solves the problem of conflicting route patterns where multiple aliases could match the same URL.
+
+### **The Problem**
+
+Consider this scenario without priorities:
+
+```razor
+@page "/products/{category}"
+@attribute [RouteAlias("/p/{category}")]
+@attribute [RouteAlias("/shop/{category}")]
+
+// Another component
+@page "/products/{id:int}"
+@attribute [RouteAlias("/p/{id:int}")]
+```
+
+**Issue**: The URL `/p/123` could match either:
+- `/p/{category}` (treating "123" as a category string)
+- `/p/{id:int}` (treating "123" as an integer ID)
+
+### **The Solution: Priority System**
+
+```razor
+// Product by category
+@page "/products/{category}"
+@attribute [RouteAlias("/p/{category}", Priority = 1)]
+@attribute [RouteAlias("/shop/{category}")]
+
+// Product by ID (higher priority)
+@page "/products/{id:int}"
+@attribute [RouteAlias("/p/{id:int}", Priority = 10)]
+```
+
+**Result**: `/p/123` will match the higher priority alias (`Priority = 10`) first, ensuring it's treated as an integer ID rather than a category string.
+
+### **Priority Best Practices**
+
+1. **Higher numbers = Higher priority** (Priority 10 beats Priority 1)
+2. **Default priority is 0** if not specified
+3. **Use sparingly** - only when you have genuine conflicts
+4. **Document priorities** - make it clear why certain aliases have priority
+
+### **Complex Priority Example**
+
+```razor
+// E-commerce product pages with conflicting patterns
+@page "/products/{productId:int}"
+@attribute [RouteAlias("/p/{productId:int}", Priority = 20)]      <!-- Highest: specific ID -->
+@attribute [RouteAlias("/item/{productId:int}", Priority = 15)]
+
+@page "/products/{category}"
+@attribute [RouteAlias("/p/{category}", Priority = 10)]          <!-- Medium: category -->
+@attribute [RouteAlias("/cat/{category}", Priority = 5)]
+
+@page "/products/special-offers"
+@attribute [RouteAlias("/p/deals", Priority = 25)]               <!-- Highest: exact match -->
+@attribute [RouteAlias("/deals")]
+```
+
+**Matching Order for `/p/deals`:**
+1. Priority 25: `/p/deals` (exact match) ✅ **WINS**
+2. Priority 20: `/p/{productId:int}` (would fail - "deals" isn't an int)
+3. Priority 10: `/p/{category}` (would match as category)
+
+**Matching Order for `/p/123`:**
+1. Priority 25: `/p/deals` (doesn't match)
+2. Priority 20: `/p/{productId:int}` ✅ **WINS** (123 is valid int)
+3. Priority 10: `/p/{category}` (would also match but lower priority)
+
+## Advanced Route Alias Features
+
+### **Detecting Alias Usage**
+
+Access alias information in your components:
+
+```razor
+@code {
+    [CascadingParameter] private RouteContext? RouteContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (RouteContext?.IsAliasMatch == true)
+        {
+            var aliasUsed = RouteContext.MatchedTemplate;
+            var primaryRoute = RouteContext.Matched?.TemplateString;
+            
+            // Log analytics: which alias brought user to this page
+            Analytics.Track("AliasUsed", new { 
+                Alias = aliasUsed, 
+                Canonical = primaryRoute 
+            });
+        }
+    }
+}
+```
+
+### **Conditional Redirects**
+
+Create smart redirects based on business logic:
+
+```razor
+@page "/shop/{category}"
+@attribute [RouteAlias("/store/{category}", RedirectToPrimary = true)]   <!-- Always redirect -->
+@attribute [RouteAlias("/mall/{category}")]                             <!-- No redirect -->
+
+<h1>Shopping: @Category</h1>
+
+@code {
+    [Parameter] public string Category { get; set; } = "";
+    [CascadingParameter] private RouteContext? RouteContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Custom redirect logic for specific aliases
+        if (RouteContext?.IsAliasMatch == true && 
+            RouteContext.MatchedTemplate.Contains("/mall/") && 
+            IsBlackFridaySeason())
+        {
+            // Redirect mall alias to special Black Friday page during November
+            NavigationManager.NavigateTo($"/black-friday/{Category}");
+        }
+    }
+}
+```
+
+### **Error Handling & Fallbacks**
+
+Route aliases integrate with ModernRouter's error handling:
+
+```razor
+@page "/docs/{section}"
+@attribute [RouteAlias("/help/{section}")]
+@attribute [RouteAlias("/support/{section}")]
+
+@code {
+    protected override void OnParametersSet()
+    {
+        // Validate section parameter regardless of which alias was used
+        if (!IsValidSection(Section))
+        {
+            // ModernRouter error handling will catch this
+            throw new ArgumentException($"Invalid documentation section: {Section}");
+        }
+    }
+}
+```
+
+## Route Alias Performance & Best Practices
+
+### **Performance Optimization**
+
+ModernRouter's route alias implementation is designed for optimal performance:
+
+1. **Primary Route First**: Always tries the primary route before checking aliases
+2. **Short-Circuit Matching**: Stops at first successful match
+3. **Priority Sorting**: Higher priority aliases checked first within each route
+4. **Template Caching**: Parsed route templates are cached during build time
+5. **Minimal Overhead**: Aliases only add cost when primary route fails
+
+### **Best Practices**
+
+#### **Use Aliases Strategically**
+```razor
+// ✅ Good: Meaningful aliases for different user types
+@page "/dashboard/users/{id:int}"
+@attribute [RouteAlias("/admin/users/{id:int}")]        <!-- Legacy admin URL -->
+@attribute [RouteAlias("/manage/users/{id:int}")]       <!-- Manager-friendly URL -->
+
+// ❌ Avoid: Too many similar aliases
+@page "/users/{id:int}"
+@attribute [RouteAlias("/user/{id:int}")]
+@attribute [RouteAlias("/usr/{id:int}")]
+@attribute [RouteAlias("/u/{id:int}")]
+@attribute [RouteAlias("/person/{id:int}")]              <!-- Excessive -->
+```
+
+#### **Minimize Priority Usage**
+```razor
+// ✅ Good: Use priorities only when necessary
+@page "/products/{id:int}"
+@attribute [RouteAlias("/p/{id:int}", Priority = 10)]   <!-- Only when conflicts exist -->
+
+// ❌ Avoid: Unnecessary priorities
+@page "/about"
+@attribute [RouteAlias("/about-us", Priority = 5)]      <!-- No conflict, priority not needed -->
+```
+
+#### **Document Alias Purposes**
+```razor
+// ✅ Good: Clear documentation
+@page "/articles/{id:int}"
+@attribute [RouteAlias("/posts/{id:int}", RedirectToPrimary = true)]  <!-- Legacy CMS migration -->
+@attribute [RouteAlias("/blog/{id:int}", RedirectToPrimary = true)]   <!-- Marketing campaign URLs -->
+```
+
+### **Migration Strategy**
+
+When implementing route aliases in existing applications:
+
+1. **Phase 1**: Add aliases without redirects to test compatibility
+2. **Phase 2**: Enable redirects for critical SEO URLs
+3. **Phase 3**: Monitor analytics to identify unused aliases
+4. **Phase 4**: Remove obsolete aliases after sufficient migration time
+
+The route aliases system provides enterprise-grade URL management capabilities while maintaining ModernRouter's focus on security, performance, and developer experience.
 
 ### Enhanced Breadcrumbs
 
@@ -218,16 +588,17 @@ Fetch data asynchronously for each route and nested outlet.
 ModernRouter uses a component-based architecture with these key parts:
 
 1. **Router**: The main router component that initiates the routing process and manages navigation.
-2. **RouteTableFactory**: Builds a routing table by analyzing component route attributes.
-3. **RouteMatcher**: Matches URL paths against route templates with security validation.
+2. **RouteTableFactory**: Builds a routing table by analyzing component route attributes and processing aliases.
+3. **RouteMatcher**: Matches URL paths against route templates and aliases with security validation.
 4. **Outlet**: Renders matched components at specific locations in the component hierarchy.
 5. **RouteView**: Renders individual route components with loading and error handling.
-6. **RouteContext**: Encapsulates routing state and parameters.
+6. **RouteContext**: Encapsulates routing state, parameters, and alias information.
 7. **INavMiddleware**: Interface for navigation middleware guards.
 8. **IRouteDataLoader**: Interface for async data loaders.
 9. **IRouteTableService**: Centralized route management and breadcrumb generation.
 10. **IRouteNameService**: Named route registration and URL generation.
 11. **Breadcrumbs**: Intelligent breadcrumb component with customizable templates.
+12. **RouteAliasAttribute**: Defines alternative URL paths with redirect and priority options.
 
 ## Middleware Guards
 
@@ -621,6 +992,7 @@ For support, please open an issue on the [GitHub repository](https://github.com/
 - [x] Named route system with type-safe navigation
 - [x] Comprehensive URL validation and security features
 - [x] Route table service for centralized route management
+- [x] Route aliases with redirect support and priority system
 
 ### Planned Features 🚧
 - [ ] Add support for lazy loading of route components
@@ -629,7 +1001,6 @@ For support, please open an issue on the [GitHub repository](https://github.com/
 - [ ] Implement route transition animations
 - [ ] Add support for source generation of route tables to improve performance
 - [ ] Concurrent prefetching of data loaders
-- [ ] Add support for route aliases
 - [ ] Implement caching for loaders to enhance performance and reduce redundant data fetching
 - [ ] Build-time type safety for loaders using source generators
 - [ ] Per navigation DI scope for loaders and middleware
