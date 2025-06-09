@@ -67,7 +67,7 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     /// </summary>
     [Parameter] public EventCallback<RouteHierarchy> OnHierarchyBuilt { get; set; }
 
-    private List<BreadcrumbItem> _breadcrumbs = [];
+    private readonly List<BreadcrumbItem> _breadcrumbs = [];
     private RouteHierarchy? _hierarchy;
 
     /// <summary>
@@ -121,7 +121,7 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     public void AddBreadcrumb(BreadcrumbItem item)
     {
         if (item == null) return;
-        
+
         _breadcrumbs.Add(item);
         InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
         InvokeAsync(StateHasChanged);
@@ -134,7 +134,7 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     public void RemoveBreadcrumb(string url)
     {
         if (string.IsNullOrEmpty(url)) return;
-        
+
         var itemToRemove = _breadcrumbs.FirstOrDefault(b => b.Url == url);
         if (itemToRemove != null)
         {
@@ -180,17 +180,17 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
         {
             var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
             var newBreadcrumbs = BreadcrumbService.GenerateHierarchicalBreadcrumbs(path, Options);
-            
+
             _breadcrumbs.Clear();
             _breadcrumbs.AddRange(newBreadcrumbs);
-            
+
             // Update hierarchy reference and fire event if this is the first time
             if (_hierarchy == null && BreadcrumbService.CurrentHierarchy != null)
             {
                 _hierarchy = BreadcrumbService.CurrentHierarchy;
                 InvokeAsync(() => OnHierarchyBuilt.InvokeAsync(_hierarchy));
             }
-            
+
             InvokeAsync(() => OnBreadcrumbsChanged.InvokeAsync(_breadcrumbs));
         }
         catch (Exception ex)
@@ -206,7 +206,7 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
         {
             var args = new BreadcrumbEventArgs(item);
             await OnBreadcrumbClick.InvokeAsync(args);
-            
+
             if (!args.Cancel && item.IsClickable && !string.IsNullOrEmpty(item.Url) && item.Url != "#")
             {
                 NavigationManager.NavigateTo(item.Url);
@@ -222,7 +222,7 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
     private string GetItemCssClass(BreadcrumbItem item)
     {
         var classes = new List<string>();
-        
+
         if (item.IsActive)
             classes.Add("active");
         if (item.IsActive && !string.IsNullOrEmpty(Options.ActiveItemCssClass))
@@ -231,10 +231,10 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
             classes.Add(item.CssClass);
         if (!item.IsClickable)
             classes.Add("not-clickable");
-        
+
         // Add hierarchy-specific classes
         classes.Add($"breadcrumb-depth-{item.Order}");
-            
+
         return string.Join(" ", classes);
     }
 
@@ -270,7 +270,17 @@ public partial class Breadcrumbs : ComponentBase, IDisposable
 
     public void Dispose()
     {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
+    ~Breadcrumbs()
+    {
+        Dispose(false);
     }
 }

@@ -11,6 +11,14 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.25rem;
+    list-style: none; /* Hide default list markers */
+    margin: 0;
+    padding: 0;
+}
+
+/* Hide ::marker pseudo-elements explicitly */
+.modern-breadcrumbs.hierarchical .breadcrumb-list li::marker {
+    content: none;
 }
 
 /* Depth-based styling */
@@ -44,29 +52,12 @@
 
 /* Enhanced active state for hierarchical breadcrumbs */
 .modern-breadcrumbs.hierarchical .breadcrumb-item.active {
-    position: relative;
     background: linear-gradient(135deg, var(--breadcrumb-active-bg, #e3f2fd), var(--breadcrumb-active-bg-alt, #f5f5f5));
     border-radius: 0.25rem;
     padding: 0.25rem 0.5rem;
     margin: -0.25rem -0.5rem;
 }
 
-/* Visual hierarchy indicators */
-.modern-breadcrumbs.hierarchical .breadcrumb-item::before {
-    content: '';
-    position: absolute;
-    left: -0.75rem;
-    top: 50%;
-    width: 0.5rem;
-    height: 1px;
-    background: var(--breadcrumb-separator-color, #dee2e6);
-    transform: translateY(-50%);
-    opacity: 0.5;
-}
-
-.modern-breadcrumbs.hierarchical .breadcrumb-item:first-child::before {
-    display: none;
-}
 
 /* Responsive behavior for hierarchical breadcrumbs */
 @media (max-width: 768px) {
