@@ -15,73 +15,68 @@ public static class ServiceCollectionExtensions
     /// Adds ModernRouter services to the specified <see cref="IServiceCollection" />.
     /// </summary>
     /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+    /// <param name="configureOptions">A callback to configure ModernRouter options.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddModernRouter(this IServiceCollection services)
+    public static IServiceCollection AddModernRouter(
+        this IServiceCollection services,
+        Action<ModernRouterOptions>? configureOptions = null)
     {
+        // Configure options
+        var options = new ModernRouterOptions();
+        configureOptions?.Invoke(options);
+        services.AddSingleton(options);
+
         // Register core services needed by ModernRouter
         services.AddScoped<INavMiddleware, ErrorHandlingMiddleware>();
         services.AddSingleton<IRouteTableService, RouteTableService>();
         services.AddSingleton<IRouteNameService, RouteNameService>();
         services.AddSingleton<IBreadcrumbService, BreadcrumbService>();
-        
+
         // Register JSRuntime wrapper for testability
         services.AddSingleton<IJSRuntimeWrapper, JSRuntimeWrapper>();
         services.AddSingleton<IRouteAnimationService, RouteAnimationService>();
-        
+
         // Register NavigationManager wrapper for testability
         services.AddScoped<INavigationWrapper, NavigationWrapper>();
-        
+
         // Register new consolidated services
         services.AddScoped<IRouteMatchingService, RouteMatchingService>();
         services.AddScoped<IRouteRenderingService, RouteRenderingService>();
 
+        // Conditionally register authorization middleware
+        if (options.EnableAuthorization)
+        {
+            services.AddScoped<INavMiddleware, AuthorizationMiddleware>();
+            services.AddSingleton(options.Authorization);
+        }
+
+        // Animation options are always registered since animations can be enabled/disabled
+        services.AddSingleton(options.Animations);
+
         return services;
     }
+
+}
+
+/// <summary>
+/// Comprehensive options for configuring ModernRouter.
+/// </summary>
+public class ModernRouterOptions
+{
+    /// <summary>
+    /// Gets or sets whether authorization middleware should be enabled.
+    /// </summary>
+    public bool EnableAuthorization { get; set; } = false;
 
     /// <summary>
-    /// Adds ModernRouter services with authorization support to the specified <see cref="IServiceCollection" />.
+    /// Gets or sets the authorization options.
     /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="configureAuthorization">A callback to configure authorization options.</param>
-    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddModernRouterWithAuthorization(
-        this IServiceCollection services,
-        Action<AuthorizationOptions>? configureAuthorization = null)
-    {
-        // Register base services
-        services.AddModernRouter();
-
-        // Register authorization middleware
-        services.AddScoped<INavMiddleware, AuthorizationMiddleware>();
-
-        // Configure authorization options
-        var options = new AuthorizationOptions();
-        configureAuthorization?.Invoke(options);
-        services.AddSingleton(options);
-
-        return services;
-    }
+    public AuthorizationOptions Authorization { get; set; } = new();
 
     /// <summary>
-    /// Adds ModernRouter services with animation support to the specified <see cref="IServiceCollection" />.
+    /// Gets or sets the animation options.
     /// </summary>
-    /// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
-    /// <param name="configureAnimations">A callback to configure animation options.</param>
-    /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddModernRouterWithAnimations(
-        this IServiceCollection services,
-        Action<AnimationOptions>? configureAnimations = null)
-    {
-        // Register base services
-        services.AddModernRouter();
-
-        // Configure animation options
-        var options = new AnimationOptions();
-        configureAnimations?.Invoke(options);
-        services.AddSingleton(options);
-
-        return services;
-    }
+    public AnimationOptions Animations { get; set; } = new();
 }
 
 /// <summary>

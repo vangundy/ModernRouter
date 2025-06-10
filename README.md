@@ -105,11 +105,33 @@ To install ModernRouter, add the library to your Blazor WebAssembly project usin
 // Basic setup
 builder.Services.AddModernRouter();
 
-// Or with authorization support 
-builder.Services.AddModernRouterWithAuthorization(options => 
+// With authorization support 
+builder.Services.AddModernRouter(options => 
 { 
-    options.LoginPath = "/auth/login"; 
-    options.ForbiddenPath = "/unauthorized"; 
+    options.EnableAuthorization = true;
+    options.Authorization.LoginPath = "/auth/login"; 
+    options.Authorization.ForbiddenPath = "/unauthorized"; 
+});
+
+// With animations
+builder.Services.AddModernRouter(options =>
+{
+    options.Animations.EnableAnimations = true;
+    options.Animations.DefaultDuration = 300;
+    options.Animations.RespectReducedMotion = true;
+});
+
+// With both authorization and animations
+builder.Services.AddModernRouter(options =>
+{
+    // Authorization
+    options.EnableAuthorization = true;
+    options.Authorization.LoginPath = "/login";
+    options.Authorization.ForbiddenPath = "/forbidden";
+    
+    // Animations
+    options.Animations.EnableAnimations = true;
+    options.Animations.DefaultDuration = 500;
 });
 ```
 3. Set up your main router in `App.razor`:
@@ -248,15 +270,15 @@ ModernRouter provides smooth, performant route transition animations using CSS-b
 #### **Service Registration**
 
 ```csharp
-// Basic animations
+// Basic animations (enabled by default)
 builder.Services.AddModernRouter();
 
 // With animation configuration
-builder.Services.AddModernRouterWithAnimations(options =>
+builder.Services.AddModernRouter(options =>
 {
-    options.EnableAnimations = true;
-    options.DefaultDuration = 300;
-    options.RespectReducedMotion = true;
+    options.Animations.EnableAnimations = true;
+    options.Animations.DefaultDuration = 300;
+    options.Animations.RespectReducedMotion = true;
 });
 ```
 

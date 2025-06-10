@@ -43,25 +43,83 @@ dotnet pack src/ModernRouter/ModernRouter.csproj
 
 ```csharp
 // In Program.cs or Startup.cs
+
+// Basic registration
 builder.Services.AddModernRouter();
 
-// Or with authorization
-builder.Services.AddModernRouterWithAuthorization(options =>
+// With authorization
+builder.Services.AddModernRouter(options =>
 {
-    options.LoginPath = "/login";
-    options.ForbiddenPath = "/forbidden";
+    options.EnableAuthorization = true;
+    options.Authorization.LoginPath = "/login";
+    options.Authorization.ForbiddenPath = "/forbidden";
 });
 
-// Or with animations
-builder.Services.AddModernRouterWithAnimations(options =>
+// With animations
+builder.Services.AddModernRouter(options =>
 {
-    options.EnableAnimations = true;
-    options.DefaultDuration = 300;
-    options.RespectReducedMotion = true;
+    options.Animations.EnableAnimations = true;
+    options.Animations.DefaultDuration = 300;
+    options.Animations.RespectReducedMotion = true;
+});
+
+// With both authorization and animations
+builder.Services.AddModernRouter(options =>
+{
+    // Authorization settings
+    options.EnableAuthorization = true;
+    options.Authorization.LoginPath = "/auth/login";
+    options.Authorization.ForbiddenPath = "/forbidden";
+    options.Authorization.IncludeReturnUrl = true;
+    
+    // Animation settings
+    options.Animations.EnableAnimations = true;
+    options.Animations.DefaultDuration = 500;
+    options.Animations.DefaultEasing = AnimationEasing.EaseInOut;
+    options.Animations.RespectReducedMotion = true;
 });
 ```
 
+## Configuration Options
+
+### ModernRouterOptions
+The unified configuration class provides access to all ModernRouter features:
+
+```csharp
+public class ModernRouterOptions
+{
+    // Feature toggles
+    public bool EnableAuthorization { get; set; } = false;
+    
+    // Nested configuration objects
+    public AuthorizationOptions Authorization { get; set; } = new();
+    public AnimationOptions Animations { get; set; } = new();
+}
+```
+
+### Authorization Options
+```csharp
+public class AuthorizationOptions
+{
+    public string LoginPath { get; set; } = "/login";
+    public string ForbiddenPath { get; set; } = "/forbidden";
+    public bool IncludeReturnUrl { get; set; } = true;
+}
+```
+
+### Animation Options
+```csharp
+public class AnimationOptions
+{
+    public bool EnableAnimations { get; set; } = true;
+    public int DefaultDuration { get; set; } = 300;
+    public AnimationEasing DefaultEasing { get; set; } = AnimationEasing.EaseInOut;
+    public bool RespectReducedMotion { get; set; } = true;
+}
+```
+
 ## Recent Enhancements
+- ✅ **Simplified Service Registration** - Single `AddModernRouter()` method with flexible options
 - ✅ Query parameter support with full parsing utilities
 - ✅ Proper URL encoding/decoding for route parameters
 - ✅ Intelligent breadcrumb route matching (replaces crude string detection)
@@ -72,7 +130,7 @@ builder.Services.AddModernRouterWithAnimations(options =>
 - ✅ Type-safe navigation with route names
 - ✅ Route aliases with redirect support and priority system
 - ✅ Route transition animations with CSS-based effects and lifecycle hooks
-- ✅ Service registration required for proper functionality
+- ✅ Comprehensive edge case testing with security focus
 
 ## Security Features
 - **URL Validation**: Comprehensive validation against malicious patterns
