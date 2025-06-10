@@ -6,14 +6,14 @@ using System.Text;
 
 namespace ModernRouter.Animations;
 
-internal sealed class RouteAnimationService : IRouteAnimationService
+public sealed class RouteAnimationService : IRouteAnimationService
 {
-    private readonly IJSRuntime _jsRuntime;
+    private readonly IJSRuntimeWrapper _jsRuntime;
     private readonly Dictionary<string, RouteAnimation> _animations = new();
     private readonly SemaphoreSlim _animationSemaphore = new(1, 1);
     private static int _animationCounter = 0;
 
-    public RouteAnimationService(IJSRuntime jsRuntime)
+    public RouteAnimationService(IJSRuntimeWrapper jsRuntime)
     {
         _jsRuntime = jsRuntime;
         RegisterBuiltInAnimations();
@@ -30,9 +30,11 @@ internal sealed class RouteAnimationService : IRouteAnimationService
         if (animation == null || string.IsNullOrEmpty(animation.ExitKeyframes))
             return AnimationResult.None;
 
+        var semaphoreAcquired = false;
         try
         {
             await _animationSemaphore.WaitAsync(context.CancellationToken);
+            semaphoreAcquired = true;
             
             var animationId = $"route-exit-{Interlocked.Increment(ref _animationCounter)}";
             var css = GenerateAnimationCss(animationId, animation.ExitKeyframes, animation);
@@ -55,7 +57,8 @@ internal sealed class RouteAnimationService : IRouteAnimationService
         }
         finally
         {
-            _animationSemaphore.Release();
+            if (semaphoreAcquired)
+                _animationSemaphore.Release();
         }
     }
 
@@ -68,9 +71,11 @@ internal sealed class RouteAnimationService : IRouteAnimationService
         if (animation == null || string.IsNullOrEmpty(animation.EnterKeyframes))
             return AnimationResult.None;
 
+        var semaphoreAcquired = false;
         try
         {
             await _animationSemaphore.WaitAsync(context.CancellationToken);
+            semaphoreAcquired = true;
             
             var animationId = $"route-enter-{Interlocked.Increment(ref _animationCounter)}";
             var css = GenerateAnimationCss(animationId, animation.EnterKeyframes, animation);
@@ -93,7 +98,8 @@ internal sealed class RouteAnimationService : IRouteAnimationService
         }
         finally
         {
-            _animationSemaphore.Release();
+            if (semaphoreAcquired)
+                _animationSemaphore.Release();
         }
     }
 
@@ -104,6 +110,9 @@ internal sealed class RouteAnimationService : IRouteAnimationService
 
     public RouteAnimation? GetAnimation(string name)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            return null;
+            
         return _animations.TryGetValue(name, out var animation) ? animation : null;
     }
 

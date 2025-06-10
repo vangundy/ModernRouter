@@ -17,8 +17,7 @@ public class RouteNameService : IRouteNameService
         if (string.IsNullOrWhiteSpace(routeName))
             throw new ArgumentException("Route name cannot be null or empty", nameof(routeName));
         
-        if (routeEntry == null)
-            throw new ArgumentNullException(nameof(routeEntry));
+        ArgumentNullException.ThrowIfNull(routeEntry);
 
         _namedRoutes.AddOrUpdate(routeName, routeEntry, (_, _) => routeEntry);
     }
@@ -72,6 +71,12 @@ public class RouteNameService : IRouteNameService
 
         try
         {
+            // Check route constraints first if validation is enabled
+            if (validateParameters && !UrlEncoder.ValidateRouteConstraints(route.TemplateString, routeValues))
+            {
+                return false;
+            }
+            
             url = validateParameters 
                 ? UrlEncoder.BuildValidatedPath(route.TemplateString, routeValues, validateParameters)
                 : UrlEncoder.BuildPath(route.TemplateString, routeValues);
@@ -96,7 +101,7 @@ public class RouteNameService : IRouteNameService
     /// <inheritdoc />
     public IEnumerable<string> GetRouteNames()
     {
-        return _namedRoutes.Keys.ToList();
+        return [.. _namedRoutes.Keys];
     }
 
     /// <inheritdoc />
@@ -113,13 +118,25 @@ public class RouteNameService : IRouteNameService
     private static Dictionary<string, object?> ConvertToStringDictionary(object? routeValues)
     {
         if (routeValues == null)
-            return new Dictionary<string, object?>();
+            return new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
 
         if (routeValues is Dictionary<string, object?> dict)
-            return dict;
+        {
+            // Ensure the dictionary uses case-insensitive comparison
+            if (dict.Comparer == StringComparer.OrdinalIgnoreCase)
+                return dict;
+            
+            // Create a new case-insensitive dictionary with the same values
+            var caseInsensitiveDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            foreach (var kvp in dict)
+            {
+                caseInsensitiveDict[kvp.Key] = kvp.Value;
+            }
+            return caseInsensitiveDict;
+        }
 
         // Handle anonymous objects
-        var result = new Dictionary<string, object?>();
+        var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var properties = routeValues.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
         
         foreach (var prop in properties)

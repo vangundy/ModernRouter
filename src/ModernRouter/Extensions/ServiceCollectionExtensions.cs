@@ -23,7 +23,13 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRouteTableService, RouteTableService>();
         services.AddSingleton<IRouteNameService, RouteNameService>();
         services.AddSingleton<IBreadcrumbService, BreadcrumbService>();
+        
+        // Register JSRuntime wrapper for testability
+        services.AddSingleton<IJSRuntimeWrapper, JSRuntimeWrapper>();
         services.AddSingleton<IRouteAnimationService, RouteAnimationService>();
+        
+        // Register NavigationManager wrapper for testability
+        services.AddScoped<INavigationWrapper, NavigationWrapper>();
         
         // Register new consolidated services
         services.AddScoped<IRouteMatchingService, RouteMatchingService>();

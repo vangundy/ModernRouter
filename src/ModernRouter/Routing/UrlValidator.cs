@@ -1,8 +1,14 @@
+using System.Web;
+
 namespace ModernRouter.Routing;
 
 public static class UrlValidator
 {
     private static readonly char[] InvalidPathChars = { '<', '>', '"', '\0', '|', '*', '?' };
+    
+    private static readonly string[] DangerousProtocols = { 
+        "javascript:", "data:", "vbscript:", "file:", "ftp:"
+    };
 
     public static UrlValidationResult ValidatePath(string? path)
     {
@@ -11,13 +17,28 @@ public static class UrlValidator
 
         var result = new UrlValidationResult();
 
-        if (path.IndexOfAny(InvalidPathChars) >= 0)
+        // Decode URL to catch encoded malicious content
+        var decodedPath = HttpUtility.UrlDecode(path);
+        
+        // Check for dangerous protocols (XSS prevention)
+        foreach (var protocol in DangerousProtocols)
+        {
+            if (decodedPath.Contains(protocol, StringComparison.OrdinalIgnoreCase))
+            {
+                result.AddError("Path contains dangerous protocol");
+                return result;
+            }
+        }
+
+        if (decodedPath.IndexOfAny(InvalidPathChars) >= 0)
             result.AddError("Path contains invalid characters");
 
-        if (path.Length > 2048)
+        if (decodedPath.Length > 2048)
             result.AddError("Path exceeds maximum length");
 
-        if (path.Contains("../") || path.Contains("..\\"))
+        // Check both original and decoded for traversal (defense in depth)
+        if (decodedPath.Contains("../") || decodedPath.Contains("..\\") ||
+            path.Contains("../") || path.Contains("..\\"))
             result.AddError("Path contains traversal attempts");
 
         return result;
@@ -44,7 +65,34 @@ public static class UrlValidator
         if (string.IsNullOrEmpty(queryString))
             return UrlValidationResult.Valid();
 
-        return ValidatePath(queryString);
+        var result = new UrlValidationResult();
+        
+        // Decode query string to catch encoded malicious content
+        var decodedQuery = HttpUtility.UrlDecode(queryString);
+        
+        // Check for dangerous protocols in query values
+        foreach (var protocol in DangerousProtocols)
+        {
+            if (decodedQuery.Contains(protocol, StringComparison.OrdinalIgnoreCase))
+            {
+                result.AddError("Query string contains dangerous protocol");
+                return result;
+            }
+        }
+
+        // Allow standard query string characters but check for dangerous content
+        var invalidQueryChars = new char[] { '<', '>', '"', '\0' }; // More permissive than path
+        if (decodedQuery.IndexOfAny(invalidQueryChars) >= 0)
+            result.AddError("Query string contains invalid characters");
+
+        if (decodedQuery.Length > 2048)
+            result.AddError("Query string exceeds maximum length");
+
+        // Check for traversal attempts in query values
+        if (decodedQuery.Contains("../") || decodedQuery.Contains("..\\"))
+            result.AddError("Query string contains traversal attempts");
+
+        return result;
     }
 }
 

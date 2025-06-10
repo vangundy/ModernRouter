@@ -97,24 +97,7 @@ public static class UrlEncoder
         
         foreach (var kvp in routeValues)
         {
-            var placeholder = $"{{{kvp.Key}}}";
-            var optionalPlaceholder = $"{{{kvp.Key}?}}";
-            
-            if (kvp.Value != null)
-            {
-                var encodedValue = kvp.Value is string stringValue 
-                    ? EncodeRouteParameter(stringValue)
-                    : kvp.Value.ToString();
-                
-                result = result.Replace(placeholder, encodedValue, StringComparison.OrdinalIgnoreCase);
-                result = result.Replace(optionalPlaceholder, encodedValue, StringComparison.OrdinalIgnoreCase);
-            }
-            else
-            {
-                // Remove optional parameters that are null
-                result = result.Replace($"/{optionalPlaceholder}", string.Empty, StringComparison.OrdinalIgnoreCase);
-                result = result.Replace(optionalPlaceholder, string.Empty, StringComparison.OrdinalIgnoreCase);
-            }
+            result = ReplaceRouteParameter(result, kvp.Key, kvp.Value);
         }
 
         return result;
@@ -164,6 +147,15 @@ public static class UrlEncoder
         if (validateParameters)
         {
             ValidateRouteParameters(routeValues);
+            
+            // Check for missing required parameters
+            ValidateRequiredParameters(template, routeValues);
+            
+            // Also validate route constraints
+            if (!ValidateRouteConstraints(template, routeValues))
+            {
+                throw new ArgumentException("One or more route parameters do not match their constraints");
+            }
         }
 
         return ProcessTemplate(template, routeValues);
@@ -184,6 +176,141 @@ public static class UrlEncoder
         }
     }
 
+    /// <summary>
+    /// Validates that all required parameters are provided
+    /// </summary>
+    /// <param name="template">Route template</param>
+    /// <param name="routeValues">Provided route values</param>
+    /// <exception cref="ArgumentException">Thrown when required parameters are missing</exception>
+    private static void ValidateRequiredParameters(string template, Dictionary<string, object?> routeValues)
+    {
+        if (string.IsNullOrEmpty(template))
+            return;
+
+        // Find all required parameters (non-optional parameters in the template)
+        var requiredParameterPattern = @"\{([^}?:]+)(?::[^}]+)?\}";
+        var optionalParameterPattern = @"\{([^}?:]+)(?::[^}]+)?\?\}";
+        
+        var requiredMatches = System.Text.RegularExpressions.Regex.Matches(template, requiredParameterPattern);
+        var optionalMatches = System.Text.RegularExpressions.Regex.Matches(template, optionalParameterPattern);
+        
+        // Get list of optional parameter names
+        var optionalParams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (System.Text.RegularExpressions.Match match in optionalMatches)
+        {
+            optionalParams.Add(match.Groups[1].Value);
+        }
+
+        // Check each required parameter
+        foreach (System.Text.RegularExpressions.Match match in requiredMatches)
+        {
+            var parameterName = match.Groups[1].Value;
+            
+            // Skip if this is actually an optional parameter
+            if (optionalParams.Contains(parameterName))
+                continue;
+                
+            // Check if parameter is provided and not null/empty
+            if (!routeValues.ContainsKey(parameterName) || 
+                routeValues[parameterName] == null ||
+                (routeValues[parameterName] is string str && string.IsNullOrEmpty(str)))
+            {
+                throw new ArgumentException($"Required route parameter '{parameterName}' is missing or empty");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates route parameters against route constraints in the template
+    /// </summary>
+    /// <param name="template">Route template with constraints</param>
+    /// <param name="routeValues">Parameter values to validate</param>
+    /// <returns>True if all parameters are valid for their constraints</returns>
+    public static bool ValidateRouteConstraints(string template, Dictionary<string, object?> routeValues)
+    {
+        if (string.IsNullOrEmpty(template) || routeValues.Count == 0)
+            return true;
+
+        foreach (var kvp in routeValues)
+        {
+            if (!ValidateParameterConstraint(template, kvp.Key, kvp.Value))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool ValidateParameterConstraint(string template, string parameterName, object? parameterValue)
+    {
+        // Extract constraint from template for this parameter
+        var constraintPattern = $@"\{{{parameterName}:([^}}]+)\}}";
+        var match = System.Text.RegularExpressions.Regex.Match(template, constraintPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        
+        if (!match.Success)
+            return true; // No constraint, parameter is valid
+
+        var constraintType = match.Groups[1].Value.ToLowerInvariant();
+        
+        return constraintType switch
+        {
+            "int" => IsValidInteger(parameterValue),
+            "long" => IsValidLong(parameterValue),
+            "double" => IsValidDouble(parameterValue),
+            "decimal" => IsValidDecimal(parameterValue),
+            "bool" => IsValidBoolean(parameterValue),
+            "guid" => IsValidGuid(parameterValue),
+            _ => true // Unknown constraint type, assume valid
+        };
+    }
+
+    private static bool IsValidInteger(object? value)
+    {
+        if (value == null) return false;
+        if (value is int) return true;
+        if (value is string str) return int.TryParse(str, out _);
+        return false;
+    }
+
+    private static bool IsValidLong(object? value)
+    {
+        if (value == null) return false;
+        if (value is long) return true;
+        if (value is string str) return long.TryParse(str, out _);
+        return false;
+    }
+
+    private static bool IsValidDouble(object? value)
+    {
+        if (value == null) return false;
+        if (value is double) return true;
+        if (value is string str) return double.TryParse(str, out _);
+        return false;
+    }
+
+    private static bool IsValidDecimal(object? value)
+    {
+        if (value == null) return false;
+        if (value is decimal) return true;
+        if (value is string str) return decimal.TryParse(str, out _);
+        return false;
+    }
+
+    private static bool IsValidBoolean(object? value)
+    {
+        if (value == null) return false;
+        if (value is bool) return true;
+        if (value is string str) return bool.TryParse(str, out _);
+        return false;
+    }
+
+    private static bool IsValidGuid(object? value)
+    {
+        if (value == null) return false;
+        if (value is Guid) return true;
+        if (value is string str) return Guid.TryParse(str, out _);
+        return false;
+    }
+
     private static string ProcessTemplate(string template, Dictionary<string, object?> routeValues)
     {
         var result = template;
@@ -198,23 +325,24 @@ public static class UrlEncoder
 
     private static string ReplaceRouteParameter(string template, string parameterName, object? parameterValue)
     {
-        var placeholder = $"{{{parameterName}}}";
-        var optionalPlaceholder = $"{{{parameterName}?}}";
+        // Handle route constraints by looking for patterns like {id:int}, {id:string}, etc.
+        var constraintPattern = $@"\{{{parameterName}(?::[^}}]+)?\}}";
+        var optionalConstraintPattern = $@"\{{{parameterName}(?::[^}}]+)?\?\}}";
         
         if (parameterValue != null)
         {
             var encodedValue = parameterValue is string stringValue 
                 ? EncodeRouteParameter(stringValue)
-                : parameterValue.ToString();
+                : parameterValue.ToString() ?? string.Empty;
             
-            template = template.Replace(placeholder, encodedValue, StringComparison.OrdinalIgnoreCase);
-            template = template.Replace(optionalPlaceholder, encodedValue, StringComparison.OrdinalIgnoreCase);
+            template = System.Text.RegularExpressions.Regex.Replace(template, constraintPattern, encodedValue, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            template = System.Text.RegularExpressions.Regex.Replace(template, optionalConstraintPattern, encodedValue, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
         else
         {
             // Remove optional parameters that are null
-            template = template.Replace($"/{optionalPlaceholder}", string.Empty, StringComparison.OrdinalIgnoreCase);
-            template = template.Replace(optionalPlaceholder, string.Empty, StringComparison.OrdinalIgnoreCase);
+            template = System.Text.RegularExpressions.Regex.Replace(template, $@"/{optionalConstraintPattern}", string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            template = System.Text.RegularExpressions.Regex.Replace(template, optionalConstraintPattern, string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
 
         return template;

@@ -12,7 +12,7 @@ public class QueryParameters : IEnumerable<KeyValuePair<string, string>>
 
     public QueryParameters(string? queryString)
     {
-        if (!string.IsNullOrEmpty(queryString))
+        if (!string.IsNullOrWhiteSpace(queryString))
             Parse(queryString);
     }
 
@@ -61,9 +61,9 @@ public class QueryParameters : IEnumerable<KeyValuePair<string, string>>
             if (!first)
                 sb.Append('&');
             
-            sb.Append(HttpUtility.UrlEncode(kvp.Key));
+            sb.Append(Uri.EscapeDataString(kvp.Key));
             sb.Append('=');
-            sb.Append(HttpUtility.UrlEncode(kvp.Value));
+            sb.Append(Uri.EscapeDataString(kvp.Value));
             first = false;
         }
 
